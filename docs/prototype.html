@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>sunao — UI prototype (red theme)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { --red: oklch(0.59 0.25 27); --red-dark: oklch(0.47 0.22 27); --bg: oklch(0.14 0 0); --bg-elev: oklch(0.17 0 0); --bg-card: oklch(0.20 0 0); --fg: oklch(1 0 0); --fg-muted: oklch(0.72 0 0); --border: oklch(0.25 0 0); }
+  html, body { background: var(--bg); color: var(--fg); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; height: 100%; overflow: hidden; margin: 0; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  h1, h2, h3 { text-wrap: balance; }
+  p, li, figcaption, .text-pretty { text-wrap: pretty; }
+  .album-art { outline: 1px solid oklch(1 0 0 / 0.1); outline-offset: -1px; }
+  #app { height: 100%; display: flex; flex-direction: column; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+  .red { color: var(--red); }
+  .bg-red { background: var(--red); }
+  .album-art { position: relative; overflow: clip; border-radius: 8px; }
+  :focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+  .album-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,.1), transparent 60%); pointer-events: none; }
+  .scrubber { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 2px; cursor: pointer; }
+  .scrubber::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 2px oklch(0 0 0 / 0.4); }
+  .scrubber::-moz-range-thumb { width: 12px; height: 12px; border-radius: 50%; background: #fff; border: none; }
+  .switcher { backdrop-filter: blur(12px); }
+  /* hover handled in media query below */
+  .song-row.active { background: oklch(0.59 0.25 27 / 0.12); }
+  .btn-icon { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; transition: background .15s, transform .15s; color: rgba(255,255,255,.85); }
+  /* hover handled in media query below */
+  .btn-icon:active { transform: scale(.96); }
+  .play-btn { width:40px; height:40px; background: var(--red); color:#fff; }
+  .play-btn:hover { background: var(--red-dark); transform: scale(1.05); }
+  .play-btn svg { margin-inline-start: 2px; }
+  .chip { background: var(--bg-card); border: 1px solid var(--border); padding: 5px 12px; border-radius: 999px; font-size: 12px; cursor: pointer; transition: background .15s, border-color .15s; }
+  /* hover handled in media query below */
+  .chip.active { background: var(--red); border-color: var(--red); color: #fff; }
+  .btn-ghost { background: transparent; border: 1px solid transparent; color: rgba(255,255,255,.8); border-radius: 8px; transition: background .15s, border-color .15s, color .15s, transform .15s; }
+  /* hover handled in media query below */
+  .btn-ghost:active { transform: scale(.96); }
+  .overlay { animation: fadein .2s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity:1; } }
+  .pulse { animation: pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .6; } }
+  svg { display: block; }
+  @media (hover: hover) and (pointer: fine) {
+    .btn-icon:hover { background: oklch(1 0 0 / 0.1); color: #fff; }
+    .btn-ghost:hover { background: oklch(1 0 0 / 0.08); border-color: oklch(1 0 0 / 0.25); color: #fff; }
+    .chip:hover { background: oklch(0.25 0 0); }
+    .song-row:hover { background: oklch(1 0 0 / 0.06); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+const ICONS = {
+  play: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>',
+  prev: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M6 6h2v12H6zM9.5 12l9.5-6v12z"/></svg>',
+  next: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16 6h2v12h-2zM4.5 6l9.5 6-9.5 6z"/></svg>',
+  heart: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20s-7-4.3-9.3-8.4C.6 8 3 4.5 6.4 4.5 8.4 4.5 10 6 12 8c2-2 3.6-3.5 5.6-3.5 3.4 0 5.8 3.5 3.7 7.1C19 15.7 12 20 12 20z"/></svg>',
+  heartFill: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 20s-7-4.3-9.3-8.4C.6 8 3 4.5 6.4 4.5 8.4 4.5 10 6 12 8c2-2 3.6-3.5 5.6-3.5 3.4 0 5.8 3.5 3.7 7.1C19 15.7 12 20 12 20z"/></svg>',
+  home: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 3l9 7v11h-6v-6h-6v6H3V10z"/></svg>',
+  search: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
+  library: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 6h16v2H4zM4 11h16v2H4zM4 16h16v2H4z"/></svg>',
+  more: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/></svg>',
+  close: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  shuffle: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M16 3h5v5l-1.5-1.5-4 4-1.5-1.5 4-4zM3 6h4l9 9h4v2h-5l-9-9H3zM3 16h4l2-2 1.5 1.5-2.5 2.5H3zM16 21h5v-5l-1.5 1.5-4-4-1.5 1.5 4 4z"/></svg>',
+  repeat: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M7 7h10v3l4-4-4-4v3H5v6h2zM17 17H7v-3l-4 4 4 4v-3h12v-6h-2z"/></svg>',
+  volume: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M3 9v6h4l5 4V5L7 9H3zm13.5 3c0-1.8-1-3.3-2.5-4v8c1.5-.7 2.5-2.2 2.5-4z"/></svg>',
+  nowplaying: '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M4 4h16v16H4zM7 7h10v10H7z" opacity=".3"/><rect x="7" y="7" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>',
+  fullscreen: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  collapse: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 6l-6 6 6 6M15 6l6 6-6 6"/></svg>',
+};
+
+// ---------- fake data ----------
+const SONGS = [
+  { id: 1, title: "Crimson Tide", artist: "The Hollows", album: "Afterglow", dur: 214, color: "#8b1a1a" },
+  { id: 2, title: "Red Sky at Night", artist: "Maren Voss", album: "Horizon", dur: 187, color: "#a32020" },
+  { id: 3, title: "Ember", artist: "Lowlight", album: "Ash & Air", dur: 243, color: "#c0392b" },
+  { id: 4, title: "Blood Moon", artist: "The Hollows", album: "Afterglow", dur: 198, color: "#7f1d1d" },
+  { id: 5, title: "Scarlet Letter", artist: "June Park", album: "Margins", dur: 221, color: "#991b1b" },
+  { id: 6, title: "Rust & Gold", artist: "Lowlight", album: "Ash & Air", dur: 176, color: "#b91c1c" },
+  { id: 7, title: "Vermilion", artist: "Maren Voss", album: "Horizon", dur: 205, color: "#dc2626" },
+  { id: 8, title: "Heartbeat", artist: "June Park", album: "Margins", dur: 169, color: "#ef4444" },
+  { id: 9, title: "After the Fire", artist: "The Hollows", album: "Afterglow", dur: 232, color: "#f87171" },
+  { id: 10, title: "Quiet Riot", artist: "Lowlight", album: "Ash & Air", dur: 191, color: "#fecaca" },
+];
+const ALBUMS = [
+  { id: "a1", title: "Afterglow", artist: "The Hollows", year: 2024, color: "#8b1a1a", songs: [1,4,9] },
+  { id: "a2", title: "Horizon", artist: "Maren Voss", year: 2025, color: "#a32020", songs: [2,7] },
+  { id: "a3", title: "Ash & Air", artist: "Lowlight", year: 2023, color: "#c0392b", songs: [3,6,10] },
+  { id: "a4", title: "Margins", artist: "June Park", year: 2025, color: "#991b1b", songs: [5,8] },
+];
+const PLAYLISTS = [
+  { id: "p1", name: "Liked Songs", songIds: [1,3,5,7,9], cover: "#e50914", system: true },
+  { id: "p2", name: "Late Night Drives", songIds: [2,6,8], cover: "#b20710", system: false },
+  { id: "p3", name: "Workout", songIds: [4,10,1], cover: "#7f1d1d", system: false },
+];
+
+// ---------- state ----------
+const state = {
+  variant: (new URLSearchParams(location.search).get('variant') || 'A').toUpperCase(),
+  currentSongId: 1,
+  isPlaying: false,
+  position: 0,
+  speed: 1,
+  activeView: "home",
+  activePlaylistId: "p1",
+  playlists: JSON.parse(JSON.stringify(PLAYLISTS)),
+  queue: [1,3,5,7,9],
+  showCreate: false,
+  newPlaylistName: "",
+  searchQuery: "",
+  showNowPlaying: false,
+  npQueueOpen: true,
+  sidebarCollapsed: false,
+  liked: new Set([1,3,5]),
+};
+let tickTimer = null;
+
+function song(id){ return SONGS.find(s=>s.id===id); }
+function fmt(sec){ sec=Math.max(0,Math.floor(sec)); const m=Math.floor(sec/60); const s=sec%60; return m+":"+String(s).padStart(2,"0"); }
+
+function startTick(){ stopTick(); tickTimer = setInterval(()=>{ if(!state.isPlaying) return; const s=song(state.currentSongId); state.position += 0.25*state.speed; if(state.position>=s.dur){ state.position=0; nextSong(); } renderPlayer(); }, 250); }
+function stopTick(){ if(tickTimer){ clearInterval(tickTimer); tickTimer=null; } }
+function play(){ state.isPlaying=true; startTick(); renderAll(); }
+function pause(){ state.isPlaying=false; renderAll(); }
+function togglePlay(){ state.isPlaying?pause():play(); }
+function seek(pct){ const s=song(state.currentSongId); state.position = s.dur*(pct/100); renderPlayer(); }
+function setSpeed(v){ state.speed=v; renderPlayer(); }
+function playSong(id){ state.currentSongId=id; state.position=0; state.isPlaying=true; startTick(); renderAll(); }
+function nextSong(){ const idx=state.queue.indexOf(state.currentSongId); const next=state.queue[(idx+1)%state.queue.length]; playSong(next); }
+function prevSong(){ if(state.position>3){ state.position=0; renderPlayer(); return;} const idx=state.queue.indexOf(state.currentSongId); const prev=state.queue[(idx-1+state.queue.length)%state.queue.length]; playSong(prev); }
+function toggleLike(id){ if(state.liked.has(id)) state.liked.delete(id); else state.liked.add(id); renderAll(); }
+
+function createPlaylist(name){ if(!name.trim()) return; const pl={id:"p"+Date.now(),name:name.trim(),songIds:[],cover:"#e50914",system:false}; state.playlists.push(pl); state.activePlaylistId=pl.id; state.activeView="playlist:"+pl.id; state.showCreate=false; state.newPlaylistName=""; renderAll(); }
+function saveToPlaylist(plId,songId){ const pl=state.playlists.find(p=>p.id===plId); if(!pl) return; if(!pl.songIds.includes(songId)) pl.songIds.push(songId); renderAll(); }
+function removeFromPlaylist(plId,songId){ const pl=state.playlists.find(p=>p.id===plId); if(!pl) return; pl.songIds=pl.songIds.filter(x=>x!==songId); renderAll(); }
+
+function setVariant(v){ state.variant=v; const url=new URL(location.href); url.searchParams.set('variant',v); history.replaceState(null,'',url); renderAll(); }
+function switchVariant(dir){ const keys=['A','B','C']; const i=keys.indexOf(state.variant); setVariant(keys[(i+dir+keys.length)%keys.length]); }
+
+// ---------- render ----------
+function renderAll(){
+  const app=document.getElementById('app');
+  app.innerHTML='';
+  let view;
+  if(state.variant==='A') view=renderA();
+  else if(state.variant==='B') view=renderB();
+  else view=renderC();
+  app.appendChild(view);
+  app.appendChild(renderSwitcher());
+  if(state.showNowPlaying) app.appendChild(renderNowPlaying());
+  wireEvents();
+}
+function wireEvents(){
+  document.querySelectorAll('.scrubber').forEach(s=>{ s.addEventListener('input', e=>{ seek(Number(e.target.value)); }); });
+  document.querySelectorAll('[data-play]').forEach(b=>{ b.addEventListener('click',()=>togglePlay()); });
+  document.querySelectorAll('[data-next]').forEach(b=>{ b.addEventListener('click',()=>nextSong()); });
+  document.querySelectorAll('[data-prev]').forEach(b=>{ b.addEventListener('click',()=>prevSong()); });
+  document.querySelectorAll('[data-playsong]').forEach(b=>{ b.addEventListener('click',()=>playSong(Number(b.dataset.playsong))); });
+  document.querySelectorAll('[data-speed]').forEach(b=>{ b.addEventListener('click',()=>setSpeed(Number(b.dataset.speed))); });
+  document.querySelectorAll('[data-view]').forEach(b=>{ b.addEventListener('click',()=>{ state.activeView=b.dataset.view; renderAll(); }); });
+  document.querySelectorAll('[data-playlist]').forEach(b=>{ b.addEventListener('click',()=>{ state.activePlaylistId=b.dataset.playlist; state.activeView='playlist:'+b.dataset.playlist; renderAll(); }); });
+  document.querySelectorAll('[data-create]').forEach(b=>{ b.addEventListener('click',()=>{ state.showCreate=true; renderAll(); }); });
+  document.querySelectorAll('[data-save]').forEach(b=>{ b.addEventListener('click',()=>{ saveToPlaylist(b.dataset.save, Number(b.dataset.song)); }); });
+  document.querySelectorAll('[data-remove]').forEach(b=>{ b.addEventListener('click',()=>{ removeFromPlaylist(b.dataset.remove, Number(b.dataset.song)); }); });
+  document.querySelectorAll('[data-confirmcreate]').forEach(b=>{ b.addEventListener('click',()=>{ const inp=document.querySelector('[data-newname]'); createPlaylist(inp?inp.value:''); }); });
+  document.querySelectorAll('[data-cancelcreate]').forEach(b=>{ b.addEventListener('click',()=>{ state.showCreate=false; state.newPlaylistName=''; renderAll(); }); });
+  document.querySelectorAll('[data-search]').forEach(i=>{ i.addEventListener('input', e=>{ state.searchQuery=e.target.value; renderAll(); }); });
+  document.querySelectorAll('[data-like]').forEach(b=>{ b.addEventListener('click',()=>{ toggleLike(Number(b.dataset.like)); }); });
+  document.querySelectorAll('[data-opennp]').forEach(b=>{ b.addEventListener('click',()=>{ state.showNowPlaying=true; renderAll(); }); });
+  document.querySelectorAll('[data-closenp]').forEach(b=>{ b.addEventListener('click',()=>{ state.showNowPlaying=false; renderAll(); }); });
+  document.querySelectorAll('[data-collapse]').forEach(b=>{ b.addEventListener('click',()=>{ state.sidebarCollapsed=!state.sidebarCollapsed; renderAll(); }); });
+  document.querySelectorAll('[data-fullscreen]').forEach(b=>{ b.addEventListener('click',()=>{ state.showNowPlaying=true; renderAll(); }); });
+  document.querySelectorAll('[data-togglequeue]').forEach(b=>{ b.addEventListener('click',()=>{ state.npQueueOpen=!state.npQueueOpen; renderAll(); }); });
+  const prev=document.querySelector('[data-swprev]'); if(prev) prev.addEventListener('click',()=>switchVariant(-1));
+  const next=document.querySelector('[data-swnext]'); if(next) next.addEventListener('click',()=>switchVariant(1));
+}
+document.addEventListener('keydown', e=>{
+  const t=e.target; if(t && (t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.isContentEditable)) return;
+  if(e.key==='ArrowLeft') switchVariant(-1);
+  else if(e.key==='ArrowRight') switchVariant(1);
+  else if(e.key===' ') { e.preventDefault(); togglePlay(); }
+  else if(e.key==='Escape' && state.showNowPlaying){ state.showNowPlaying=false; renderAll(); }
+});
+
+function renderSwitcher(){
+  const wrap=document.createElement('div');
+  wrap.className='fixed bottom-4 left-1/2 -translate-x-1/2 z-50 switcher';
+  const names={A:'Combined (A+C+NP)',B:'Immersive',C:'Compact'};
+  wrap.innerHTML=`
+    <div class="flex items-center gap-2 bg-black/80 border border-white/10 rounded-full px-3 py-2 shadow-2xl">
+      <button data-swprev class="btn-icon !w-8 !h-8 text-white/80">${ICONS.prev}</button>
+      <div class="px-3 text-sm font-medium tabular-nums">
+        <span class="text-red-500 font-bold">${state.variant}</span>
+        <span class="text-white/60 ml-1">${names[state.variant]}</span>
+      </div>
+      <button data-swnext class="btn-icon !w-8 !h-8 text-white/80">${ICONS.next}</button>
+    </div>
+    <div class="text-center mt-1 text-[10px] text-white/40">← → switch · space play/pause · esc close now-playing</div>
+  `;
+  return wrap;
+}
+
+function scrubberStyle(){
+  const s=song(state.currentSongId); const pct=(state.position/s.dur)*100;
+  return `background:linear-gradient(to right,#fff 0%,#fff ${pct}%,#404040 ${pct}%,#404040 100%);`;
+}
+
+function renderPlayerBar(){
+  const s=song(state.currentSongId);
+  const pct=(state.position/s.dur)*100;
+  const liked=state.liked.has(s.id);
+  return `
+    <div class="flex items-center gap-3 px-4 py-4 bg-[#181818] border-t border-white/5">
+      <button data-opennp class="btn-ghost flex items-center gap-3 px-2 py-1.5 min-w-0" title="Now playing">
+        <div class="album-art w-14 h-14 shrink-0" style="background:${s.color};border-radius:8px"></div>
+        <div class="min-w-0 w-44 text-left">
+          <div class="text-sm font-semibold truncate">${s.title}</div>
+          <div class="text-xs text-white/60 truncate">${s.artist}</div>
+        </div>
+      </button>
+      <div class="flex items-center gap-1 ml-1">
+        <button class="btn-ghost btn-icon" data-prev title="previous">${ICONS.prev}</button>
+        <button class="play-btn btn-icon" data-play title="play/pause">${state.isPlaying?ICONS.pause:ICONS.play}</button>
+        <button class="btn-ghost btn-icon" data-next title="next">${ICONS.next}</button>
+      </div>
+      <!-- progress (not too long) + like on its right -->
+      <div class="flex items-center gap-3 ml-2" style="max-width:620px;flex:1 1 420px;">
+        <span class="text-xs text-white/70 tabular-nums w-9 text-right">${fmt(state.position)}</span>
+        <input type="range" min="0" max="100" step="0.1" value="${pct}" class="scrubber flex-1" style="${scrubberStyle()}" />
+        <span class="text-xs text-white/50 tabular-nums w-9">${fmt(s.dur)}</span>
+        <button class="btn-ghost btn-icon !w-8 !h-8" data-like="${s.id}" title="like">${liked?ICONS.heartFill:ICONS.heart}</button>
+      </div>
+      <!-- speed as ghost button showing current pace -->
+      <div class="relative group ml-auto">
+        <button class="btn-ghost px-3 py-1.5 text-sm font-semibold flex items-center gap-1" title="playback speed">${state.speed}× ${ICONS.more}</button>
+        <div class="absolute bottom-full right-0 mb-2 hidden group-hover:flex flex-col gap-1 bg-[#1f1f1f] border border-white/10 rounded-lg p-2 shadow-2xl min-w-[130px]">
+          <div class="text-[10px] text-white/40 uppercase tracking-wider px-2">Speed</div>
+          ${[0.5,1,1.25,1.5,2].map(v=>`<button data-speed="${v}" class="text-left px-2 py-1 rounded text-sm hover:bg-white/10 ${state.speed===v?'text-red-400 font-semibold':''}">${v}×${state.speed===v?' ✓':''}</button>`).join('')}
+        </div>
+      </div>
+      <button class="btn-ghost !w-9 !h-9 flex items-center justify-center" data-fullscreen title="full screen">${ICONS.fullscreen}</button>
+    </div>
+  `;
+}
+
+// ---------- Variant A: Combined ----------
+function renderA(){
+  const root=document.createElement('div');
+  root.className='h-full flex flex-col';
+  const pl=state.playlists.find(p=>p.id===state.activePlaylistId);
+  const view=state.activeView;
+  let mainHtml='';
+  if(view==='home'){
+    mainHtml=`
+      <h1 class="text-2xl font-bold mb-4">Good evening</h1>
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
+        ${state.playlists.slice(0,6).map(p=>`
+          <button data-playlist="${p.id}" class="flex items-center gap-3 bg-white/5 hover:bg-white/10 rounded-md overflow-hidden text-left">
+            <div class="w-16 h-16 shrink-0" style="background:${p.cover}"></div>
+            <span class="font-semibold text-sm">${p.name}</span>
+          </button>`).join('')}
+      </div>
+      <h2 class="text-xl font-bold mb-3">Recently played</h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+        ${ALBUMS.map(a=>`
+          <div class="bg-[#181818] p-4 rounded-3xl hover:bg-[#282828] cursor-pointer group">
+            <div class="album-art w-full aspect-square mb-3" style="background:${a.color}"></div>
+            <div class="font-semibold text-sm truncate">${a.title}</div>
+            <div class="text-xs text-white/60 truncate">${a.artist} · ${a.year}</div>
+          </div>`).join('')}
+      </div>
+    `;
+  } else if(view==='search'){
+    const q=state.searchQuery.toLowerCase();
+    const res=q?SONGS.filter(s=>s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q)):SONGS;
+    mainHtml=`
+      <h1 class="text-2xl font-bold mb-4">Search</h1>
+      <input data-search value="${state.searchQuery}" placeholder="What do you want to listen to?" class="w-full max-w-xl bg-white/10 rounded-full px-5 py-3 text-sm outline-none focus:bg-white/15 mb-6" />
+      <div class="space-y-0.5">${res.map(s=>songRow(s)).join('')}</div>
+    `;
+  } else if(view==='library'){
+    mainHtml=`
+      <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-bold">Your Library</h1>
+        <button data-create class="chip active">+ New playlist</button>
+      </div>
+      ${state.showCreate?createBox():''}
+      <div class="space-y-1">
+        ${state.playlists.map(p=>`
+          <button data-playlist="${p.id}" class="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/5 text-left">
+            <div class="w-12 h-12 rounded shrink-0" style="background:${p.cover}"></div>
+            <div>
+              <div class="text-sm font-semibold">${p.name}</div>
+              <div class="text-xs text-white/60">${p.songIds.length} songs${p.system?' · system':''}</div>
+            </div>
+          </button>`).join('')}
+      </div>
+    `;
+  } else if(view.startsWith('playlist:')){
+    const pid=view.split(':')[1];
+    const p=state.playlists.find(x=>x.id===pid);
+    mainHtml=`
+      <div class="flex items-end gap-6 mb-6">
+        <div class="w-44 h-44 rounded shadow-2xl shrink-0 cursor-pointer" style="background:${p.cover}" data-opennp></div>
+        <div>
+          <div class="text-xs uppercase tracking-wider text-white/60">Playlist</div>
+          <h1 class="text-4xl font-black mt-1">${p.name}</h1>
+          <div class="text-sm text-white/60 mt-2">${p.songIds.length} songs</div>
+          <div class="flex gap-3 mt-4">
+            <button class="play-btn btn-icon !w-12 !h-12" data-play>${ICONS.play}</button>
+            <button data-create class="chip">+ New playlist</button>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-0.5">
+        ${p.songIds.length?p.songIds.map((sid,i)=>songRow(song(sid),i+1,pid)).join(''):`<div class="text-white/40 py-8">Empty playlist. Add songs from search or albums.</div>`}
+      </div>
+    `;
+  }
+  const s=song(state.currentSongId);
+  root.innerHTML=`
+    <div class="flex flex-1 min-h-0">
+      <aside class="w-56 bg-black flex flex-col p-4 gap-2 shrink-0">
+        <div class="flex items-center gap-2 px-2 mb-4">
+          <div class="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center font-black">S</div>
+          <span class="font-bold text-lg tracking-tight">sunao</span>
+        </div>
+        <nav class="flex flex-col gap-1">
+          ${navBtn('home','Home',ICONS.home)}
+          ${navBtn('search','Search',ICONS.search)}
+          ${navBtn('library','Your Library',ICONS.library)}
+        </nav>
+        <div class="mt-4 pt-4 border-t border-white/5 flex-1 overflow-y-auto">
+          <div class="text-xs text-white/40 uppercase tracking-wider px-2 mb-2">Playlists</div>
+          ${state.playlists.map(p=>`<button data-playlist="${p.id}" class="btn-ghost w-full text-left px-2 py-1.5 text-sm text-white/70 hover:text-white rounded truncate ${state.activePlaylistId===p.id&&view.startsWith('playlist')?'text-white font-semibold bg-white/10':''}">${p.name}</button>`).join('')}
+          <button data-create class="btn-ghost w-full text-left px-2 py-1.5 text-sm text-red-400 rounded mt-1">+ New playlist</button>
+        </div>
+      </aside>
+      <main class="flex-1 overflow-y-auto p-6 pb-4">
+        ${state.showCreate?createBox():''}
+        ${mainHtml}
+      </main>
+      ${state.sidebarCollapsed?`
+      <aside class="w-12 bg-[#181818] border-l border-white/5 p-2 shrink-0 hidden lg:flex flex-col items-center">
+        <button data-collapse class="btn-icon !w-8 !h-8" title="expand sidebar">${ICONS.collapse}</button>
+      </aside>
+      `:`
+      <aside class="w-72 bg-[#181818] border-l border-white/5 p-4 overflow-y-auto shrink-0 hidden lg:block">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-xs font-bold text-white/60 uppercase tracking-wider">Now playing</h3>
+          <button data-collapse class="btn-ghost !w-7 !h-7 !p-0 flex items-center justify-center" title="collapse">${ICONS.collapse}</button>
+        </div>
+        <div class="bg-white/5 rounded-lg p-3 flex items-center gap-3 cursor-pointer mb-5" data-opennp>
+          <div class="album-art w-12 h-12 shrink-0" style="background:${s.color};border-radius:6px"></div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold truncate">${s.title}</div>
+            <div class="text-xs text-white/50 truncate">${s.artist}</div>
+          </div>
+        </div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xs font-bold text-white/60 uppercase tracking-wider">Queue</h3>
+          <span class="text-xs text-white/40">${state.queue.length} songs</span>
+        </div>
+        <div class="space-y-0.5">
+          ${state.queue.map((sid,i)=>`
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-sm cursor-pointer hover:bg-white/5 ${sid===state.currentSongId?'bg-red-600/15':''}" data-playsong="${sid}">
+              <span class="text-white/40 w-5 text-right text-xs tabular-nums">${i+1}</span>
+              <div class="album-art w-8 h-8 shrink-0" style="background:${song(sid).color};border-radius:4px"></div>
+              <div class="min-w-0 flex-1">
+                <div class="truncate text-sm ${sid===state.currentSongId?'text-red-400 font-semibold':''}">${song(sid).title}</div>
+                <div class="text-xs text-white/50 truncate">${song(sid).artist}</div>
+              </div>
+              ${sid===state.currentSongId&&state.isPlaying?'<span class="text-red-400 text-xs">♫</span>':''}
+            </div>`).join('')}
+        </div>
+      </aside>
+      `}
+    </div>
+    ${renderPlayerBar()}
+  `;
+  return root;
+}
+
+// ---------- Variant B: Immersive ----------
+function renderB(){
+  const root=document.createElement('div');
+  root.className='h-full flex flex-col';
+  const s=song(state.currentSongId);
+  const pct=(state.position/s.dur)*100;
+  const pl=state.playlists.find(p=>p.id===state.activePlaylistId);
+  root.innerHTML=`
+    <header class="flex items-center justify-between px-6 py-4">
+      <div class="flex items-center gap-2">
+        <div class="w-7 h-7 rounded-full bg-red-600 flex items-center justify-center font-black text-sm">S</div>
+        <span class="font-bold">sunao</span>
+      </div>
+      <div class="flex gap-2">
+        ${['home','search','library'].map((v,i)=>`<button data-view="${v}" class="chip ${state.activeView===v?'active':''}">${['Home','Search','Library'][i]}</button>`).join('')}
+      </div>
+    </header>
+    <main class="flex-1 grid grid-cols-1 md:grid-cols-[1.2fr_1fr] gap-8 px-6 pb-28 items-center">
+      <section class="flex flex-col items-center text-center">
+        <div class="album-art w-72 h-72 md:w-96 md:h-96 shadow-2xl mb-8 ${state.isPlaying?'pulse':''}" style="background:${s.color};border-radius:16px;"></div>
+        <h1 class="text-3xl font-black">${s.title}</h1>
+        <p class="text-white/60 mt-1">${s.artist}</p>
+        <p class="text-white/40 text-sm">${s.album}</p>
+        <div class="w-full max-w-md mt-6">
+          <input type="range" min="0" max="100" step="0.1" value="${pct}" class="scrubber w-full" style="${scrubberStyle()}" />
+          <div class="flex justify-between text-xs text-white/50 mt-1"><span>${fmt(state.position)}</span><span>${fmt(s.dur)}</span></div>
+        </div>
+        <div class="flex items-center gap-6 mt-6">
+          <button class="btn-icon" data-prev>${ICONS.prev}</button>
+          <button class="play-btn btn-icon !w-16 !h-16" data-play>${state.isPlaying?ICONS.pause:ICONS.play}</button>
+          <button class="btn-icon" data-next>${ICONS.next}</button>
+        </div>
+        <div class="flex gap-2 mt-6">
+          ${[0.5,1,1.25,1.5,2].map(v=>`<button data-speed="${v}" class="chip ${state.speed===v?'active':''}">${v}×</button>`).join('')}
+        </div>
+      </section>
+      <section class="bg-white/5 rounded-2xl p-4 max-h-[70vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold">Up next · ${pl.name}</h2>
+          <button data-create class="chip !px-2 !py-1 text-xs">+ Playlist</button>
+        </div>
+        ${state.showCreate?createBox():''}
+        <div class="space-y-1">${pl.songIds.map((sid,i)=>songRow(song(sid),i+1,pl.id,true)).join('')}</div>
+        ${state.activeView==='search'?searchPanel(true):''}
+        ${state.activeView==='library'?libraryPanel(true):''}
+      </section>
+    </main>
+  `;
+  return root;
+}
+
+// ---------- Variant C: Compact ----------
+function renderC(){
+  const root=document.createElement('div');
+  root.className='h-full flex flex-col';
+  const s=song(state.currentSongId);
+  const pct=(state.position/s.dur)*100;
+  const pl=state.playlists.find(p=>p.id===state.activePlaylistId);
+  root.innerHTML=`
+    <div class="flex flex-1 min-h-0">
+      <aside class="w-44 bg-black flex flex-col p-3 gap-1 shrink-0 text-sm">
+        <div class="flex items-center gap-2 px-1 mb-3">
+          <div class="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center font-black text-xs">S</div>
+          <span class="font-bold">sunao</span>
+        </div>
+        ${['home','search','library'].map((v,i)=>`<button data-view="${v}" class="btn-ghost text-left px-2 py-1.5 rounded ${state.activeView===v?'bg-white/10 font-semibold text-red-400':''}">${['Home','Search','Library'][i]}</button>`).join('')}
+        <div class="mt-3 pt-3 border-t border-white/5 flex-1 overflow-y-auto">
+          <div class="text-[10px] text-white/40 uppercase tracking-wider px-2 mb-1">Playlists</div>
+          ${state.playlists.map(p=>`<button data-playlist="${p.id}" class="w-full text-left px-2 py-1 rounded text-xs text-white/70 hover:text-white truncate ${state.activePlaylistId===p.id?'text-red-400 font-semibold':''}">${p.name}</button>`).join('')}
+          <button data-create class="w-full text-left px-2 py-1 rounded text-xs text-red-400 hover:bg-white/5 mt-1">+ New</button>
+        </div>
+      </aside>
+      <main class="flex-1 overflow-y-auto p-4 pb-20">
+        ${state.showCreate?createBox():''}
+        ${state.activeView==='home'?`
+          <h2 class="font-bold mb-2">Made for you</h2>
+          <div class="grid grid-cols-3 lg:grid-cols-4 gap-2 mb-4">
+            ${ALBUMS.map(a=>`<div class="bg-[#181818] p-2 rounded hover:bg-[#282828] cursor-pointer">
+              <div class="album-art w-full aspect-square mb-1" style="background:${a.color};border-radius:4px"></div>
+              <div class="text-xs font-semibold truncate">${a.title}</div>
+              <div class="text-[10px] text-white/50 truncate">${a.artist}</div>
+            </div>`).join('')}
+          </div>
+          <h2 class="font-bold mb-2">Playlists</h2>
+          <div class="grid grid-cols-2 gap-2">
+            ${state.playlists.map(p=>`<button data-playlist="${p.id}" class="flex items-center gap-2 bg-white/5 rounded p-2 hover:bg-white/10 text-left">
+              <div class="w-10 h-10 rounded shrink-0" style="background:${p.cover}"></div>
+              <div class="min-w-0"><div class="text-xs font-semibold truncate">${p.name}</div><div class="text-[10px] text-white/50">${p.songIds.length} songs</div></div>
+            </button>`).join('')}
+          </div>
+        `:''}
+        ${state.activeView==='search'?`
+          <input data-search value="${state.searchQuery}" placeholder="Search…" class="w-full bg-white/10 rounded px-3 py-1.5 text-sm outline-none mb-3" />
+          <div class="space-y-0.5">${(state.searchQuery?SONGS.filter(s=>s.title.toLowerCase().includes(state.searchQuery.toLowerCase())||s.artist.toLowerCase().includes(state.searchQuery.toLowerCase())):SONGS).map(s=>songRow(s,true)).join('')}</div>
+        `:''}
+        ${state.activeView==='library'?`
+          <div class="space-y-0.5">${state.playlists.map(p=>`<button data-playlist="${p.id}" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/5 text-left">
+            <div class="w-8 h-8 rounded shrink-0" style="background:${p.cover}"></div>
+            <div class="min-w-0"><div class="text-xs font-semibold truncate">${p.name}</div><div class="text-[10px] text-white/50">${p.songIds.length} songs</div></div>
+          </button>`).join('')}</div>
+        `:''}
+        ${state.activeView.startsWith('playlist:')?`
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-16 h-16 rounded shrink-0" style="background:${pl.cover}"></div>
+            <div><div class="font-bold">${pl.name}</div><div class="text-xs text-white/50">${pl.songIds.length} songs</div></div>
+          </div>
+          <div class="space-y-0.5">${pl.songIds.length?pl.songIds.map((sid,i)=>songRow(song(sid),i+1,pl.id,true)).join(''):`<div class="text-white/40 text-xs py-4">Empty</div>`}</div>
+        `:''}
+      </main>
+      <aside class="w-60 bg-[#181818] border-l border-white/5 p-3 overflow-y-auto shrink-0 hidden lg:block">
+        <h3 class="text-xs font-bold text-white/60 uppercase tracking-wider mb-2">Queue</h3>
+        <div class="space-y-0.5">
+          ${state.queue.map((sid,i)=>`<div class="flex items-center gap-2 px-2 py-1 rounded text-xs ${sid===state.currentSongId?'bg-red-600/20 text-red-300':''}">
+            <span class="text-white/40 w-4">${i+1}</span>
+            <div class="min-w-0 flex-1"><div class="truncate">${song(sid).title}</div><div class="text-white/40 truncate">${song(sid).artist}</div></div>
+          </div>`).join('')}
+        </div>
+      </aside>
+    </div>
+    <div class="fixed bottom-0 left-0 right-0 bg-[#181818] border-t border-white/5 px-3 py-2 flex items-center gap-3">
+      <div class="album-art w-9 h-9 shrink-0 cursor-pointer" style="background:${s.color};border-radius:4px" data-opennp></div>
+      <div class="min-w-0 w-32"><div class="text-xs font-semibold truncate">${s.title}</div><div class="text-[10px] text-white/50 truncate">${s.artist}</div></div>
+      <button class="btn-icon !w-7 !h-7" data-prev>${ICONS.prev}</button>
+      <button class="play-btn btn-icon !w-8 !h-8 !text-sm" data-play>${state.isPlaying?ICONS.pause:ICONS.play}</button>
+      <button class="btn-icon !w-7 !h-7" data-next>${ICONS.next}</button>
+      <input type="range" min="0" max="100" step="0.1" value="${pct}" class="scrubber flex-1" style="${scrubberStyle()}" />
+      <span class="text-[10px] text-white/50 tabular-nums w-16 text-right">${fmt(state.position)}/${fmt(s.dur)}</span>
+      <select class="bg-white/10 text-xs rounded px-1 py-0.5" onchange="setSpeed(Number(this.value))">${[0.5,1,1.25,1.5,2].map(v=>`<option value="${v}" ${state.speed===v?'selected':''}>${v}×</option>`).join('')}</select>
+    </div>
+  `;
+  return root;
+}
+
+// ---------- Now Playing overlay ----------
+function renderNowPlaying(){
+  const s=song(state.currentSongId);
+  const pct=(state.position/s.dur)*100;
+  const liked=state.liked.has(s.id);
+  const wrap=document.createElement('div');
+  wrap.className='fixed inset-0 z-[60] bg-gradient-to-b from-[#2a0a0a] to-[#121212] overlay flex flex-col';
+  const pl=state.playlists.find(p=>p.id===state.activePlaylistId);
+  wrap.innerHTML=`
+    <header class="flex items-center justify-between px-6 py-4">
+      <button data-closenp class="btn-icon">${ICONS.close}</button>
+      <div class="text-xs uppercase tracking-widest text-white/60">Now playing</div>
+      <button data-togglequeue class="btn-ghost px-3 py-1.5 text-sm flex items-center gap-2" title="queue">${ICONS.library} Queue</button>
+    </header>
+    <main class="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 px-8 pb-8 overflow-hidden">
+      <div class="flex flex-col items-center text-center shrink-0">
+        <div class="album-art w-64 h-64 md:w-80 md:h-80 shadow-2xl ${state.isPlaying?'pulse':''}" style="background:${s.color};border-radius:20px;"></div>
+      </div>
+      <div class="w-full max-w-md">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-black">${s.title}</h1>
+            <p class="text-white/60 mt-1">${s.artist}</p>
+            <p class="text-white/40 text-sm">${s.album}</p>
+          </div>
+          <button data-like="${s.id}" class="btn-icon">${liked?ICONS.heartFill:ICONS.heart}</button>
+        </div>
+        <div class="mt-8">
+          <input type="range" min="0" max="100" step="0.1" value="${pct}" class="scrubber w-full" style="${scrubberStyle()}" />
+          <div class="flex justify-between text-xs text-white/50 mt-1"><span>${fmt(state.position)}</span><span>${fmt(s.dur)}</span></div>
+        </div>
+        <div class="flex items-center justify-between mt-6">
+          <button class="btn-icon">${ICONS.shuffle}</button>
+          <div class="flex items-center gap-4">
+            <button class="btn-icon" data-prev>${ICONS.prev}</button>
+            <button class="play-btn btn-icon !w-16 !h-16" data-play>${state.isPlaying?ICONS.pause:ICONS.play}</button>
+            <button class="btn-icon" data-next>${ICONS.next}</button>
+          </div>
+          <button class="btn-icon">${ICONS.repeat}</button>
+        </div>
+        <div class="flex gap-2 mt-6 justify-center">
+          ${[0.5,1,1.25,1.5,2].map(v=>`<button data-speed="${v}" class="chip ${state.speed===v?'active':''}">${v}×</button>`).join('')}
+        </div>
+      </div>
+      ${state.npQueueOpen?`
+      <aside class="w-72 bg-white/5 rounded-2xl p-4 max-h-[70vh] overflow-y-auto shrink-0">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-bold">Queue · ${pl.name}</h2>
+          <button data-togglequeue class="btn-icon !w-7 !h-7">${ICONS.close}</button>
+        </div>
+        <div class="space-y-1">${pl.songIds.map((sid,i)=>songRow(song(sid),i+1,pl.id,true)).join('')}</div>
+      </aside>
+      `:''}
+    </main>
+  `;
+  return wrap;
+}
+
+// ---------- shared bits ----------
+function navBtn(view,label,icon){
+  return `<button data-view="${view}" class="btn-ghost flex items-center gap-3 px-3 py-2 rounded-md text-sm font-semibold ${state.activeView===view?'bg-white/10 text-white border-white/20':''}">${icon} ${label}</button>`;
+}
+function songRow(s, idx, plId, compact=false){
+  const active=s.id===state.currentSongId;
+  return `
+    <div class="song-row ${active?'active':''} flex items-center gap-3 px-3 ${compact?'py-1.5':'py-2'} rounded cursor-pointer group" data-playsong="${s.id}">
+      ${idx?`<span class="w-6 text-right text-sm ${active?'text-red-400':'text-white/40'} tabular-nums">${active&&state.isPlaying?'♫':idx}</span>`:''}
+      <div class="album-art ${compact?'w-8 h-8':'w-10 h-10'} shrink-0" style="background:${s.color};border-radius:4px"></div>
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-medium truncate ${active?'text-red-400':''}">${s.title}</div>
+        <div class="text-xs text-white/50 truncate">${s.artist}</div>
+      </div>
+      ${!compact?`<div class="text-xs text-white/40 hidden md:block w-32 truncate">${s.album}</div>`:''}
+      <div class="text-xs text-white/50 tabular-nums w-10 text-right">${fmt(s.dur)}</div>
+      <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
+        ${plId?`<button data-remove="${plId}" data-song="${s.id}" class="text-white/40 hover:text-red-400 text-xs px-1" title="remove">✕</button>`:`<button data-save="p1" data-song="${s.id}" class="text-white/40 hover:text-white text-xs px-1" title="save">♥</button>`}
+      </div>
+    </div>
+  `;
+}
+function createBox(){
+  return `
+    <div class="bg-[#181818] border border-white/10 rounded-lg p-4 mb-4">
+      <div class="text-sm font-semibold mb-2">New playlist</div>
+      <input data-newname placeholder="Playlist name" class="w-full bg-white/10 rounded px-3 py-2 text-sm outline-none mb-3" />
+      <div class="flex gap-2">
+        <button data-confirmcreate class="bg-red-600 hover:bg-red-700 text-white text-sm px-4 py-1.5 rounded-full">Create</button>
+        <button data-cancelcreate class="text-white/60 text-sm px-4 py-1.5">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+function searchPanel(compact=false){
+  const q=state.searchQuery.toLowerCase();
+  const res=q?SONGS.filter(s=>s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q)):SONGS;
+  return `<div class="mt-4"><input data-search value="${state.searchQuery}" placeholder="Search…" class="w-full bg-white/10 rounded px-3 py-1.5 text-sm outline-none mb-3" />
+  <div class="space-y-0.5">${res.map(s=>songRow(s,undefined,undefined,true)).join('')}</div></div>`;
+}
+function libraryPanel(compact=false){
+  return `<div class="mt-4 space-y-1">${state.playlists.map(p=>`<button data-playlist="${p.id}" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/5 text-left">
+    <div class="w-8 h-8 rounded shrink-0" style="background:${p.cover}"></div>
+    <div class="min-w-0"><div class="text-xs font-semibold truncate">${p.name}</div><div class="text-[10px] text-white/50">${p.songIds.length} songs</div></div>
+  </button>`).join('')}</div>`;
+}
+function renderPlayer(){ renderAll(); }
+
+startTick();
+renderAll();
+</script>
+</body>
+</html>
