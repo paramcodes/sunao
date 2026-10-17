@@ -1,10 +1,15 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { PanelRightClose, PanelRightOpen } from "lucide-react";
 import Image from "next/image";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { SONGS } from "@/lib/data/songs";
+import { cn } from "@/lib/utils";
 import { usePlayer } from "@/stores/player";
+
+const PANEL_ID = "queue-panel-content";
 
 export function QueueContent() {
   const queue = usePlayer((s) => s.queue);
@@ -109,12 +114,49 @@ export function QueueContent() {
 }
 
 export function QueuePanel() {
+  const [open, setOpen] = useState(true);
+  const label = open ? "Hide queue" : "Show queue";
+
   return (
     <aside
       data-slot="queue-panel"
-      className="hidden w-72 shrink-0 flex-col border-l border-white/5 bg-[#181818] p-4 lg:flex"
+      className={cn(
+        "hidden shrink-0 flex-col overflow-hidden border-l border-white/5 bg-[#181818] transition-[width,padding] duration-[var(--duration-drawer)] ease-[var(--ease-drawer)] lg:flex",
+        open ? "w-72 p-4" : "w-10 px-1 py-4",
+      )}
     >
-      <QueueContent />
+      <div className="flex h-9 shrink-0 items-center">
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <button
+                onClick={() => setOpen((v) => !v)}
+                aria-label={label}
+                aria-expanded={open}
+                aria-controls={PANEL_ID}
+                className="btn-ghost flex h-7 w-7 items-center justify-center rounded-md"
+              />
+            }
+          >
+            {open ? (
+              <PanelRightClose className="h-[18px] w-[18px]" />
+            ) : (
+              <PanelRightOpen className="h-[18px] w-[18px]" />
+            )}
+          </TooltipTrigger>
+          <TooltipContent>{label}</TooltipContent>
+        </Tooltip>
+      </div>
+      <div
+        id={PANEL_ID}
+        inert={!open}
+        className={cn(
+          "flex min-h-0 flex-1 flex-col transition-opacity duration-[var(--duration-drawer)] ease-[var(--ease-drawer)]",
+          open ? "opacity-100" : "opacity-0",
+        )}
+      >
+        <QueueContent />
+      </div>
     </aside>
   );
 }
