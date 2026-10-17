@@ -1,6 +1,6 @@
 # sunao
 
-A Spotify-like music player. Red theme, dark UI. Built with Next.js 16, React 19, Tailwind v4, shadcn/ui on Base UI, Supabase, Zustand, and TanStack Query.
+A Spotify-like music player. Red theme, dark UI. Runs with or without a Supabase backend. Built with Next.js 16, React 19, Tailwind v4, shadcn/ui on Base UI, Supabase, Zustand, and TanStack Query.
 
 **Live demo:** https://sunao-omega.vercel.app
 
@@ -38,7 +38,7 @@ Playback
 - Play / pause, previous / next, and auto-advance when a track ends
 - Seek scrubber bound to the audio element's real duration, with position and total labels
 - Playback speed: 0.5×, 1×, 1.25×, 1.5×, 2×
-- Like / unlike the current track (session-only, in memory; not persisted to Supabase)
+- Like / unlike the current track — persisted (a versioned `localStorage` library document without a backend; a `liked_songs` table in Supabase mode), with optimistic updates and an Undo toast on removal
 - Buffering spinner, debounced 200ms so it does not flash on fast loads
 - Audio: 30-second previews from the iTunes Search API (no key), cached per title + artist, falling back to a bundled sample tone
 - Album artwork from the iTunes CDN, served through `next/image`
@@ -46,7 +46,7 @@ Playback
 Browse
 - Home: album grid (click an album to play it) plus the full song list
 - Search: filter songs by title or artist, with an empty state
-- Library: list playlists and create a new one (writes to Supabase, or to a local store without a backend)
+- Library: list playlists and create a new one (writes to Supabase when configured, to an on-device store otherwise — both persist across reloads)
 - Playlist detail: cover, song count, "Play all", remove a song, empty state
 
 Now playing and queue
@@ -57,7 +57,7 @@ Now playing and queue
 Auth (Supabase, optional)
 - Email and password sign in / sign up, plus an `/auth/callback` route for confirmation links
 - `src/proxy.ts` refreshes the session and protects `/library` and `/playlist/*`
-- With the Supabase env vars unset the app runs without a backend: static seed data, in-memory playlists, and no auth
+- With the Supabase env vars unset the app runs without a backend: static seed data, an on-device library store (`localStorage`), and no auth
 
 Mobile
 - Bottom nav (Home / Search / Library / Queue) below `lg`, replacing the hidden sidebar
@@ -65,10 +65,10 @@ Mobile
 - Safe-area padding on the bottom nav
 
 Polish
-- Loading skeletons for the home route; empty states for search and playlists
-- Accessibility: ARIA labels and states on player controls, tooltips with keyboard hints, Space toggles play/pause, focus-visible ring, `inert` collapsed panels
+- Loading skeletons for the home route; empty states for search and playlists, with an action slot when there is an obvious next step
+- Accessibility: a skip-to-content link, ARIA labels and states on player controls, tooltips with keyboard hints, Space toggles play/pause, focus-visible ring, `inert` collapsed panels
 - Motion: shared easing tokens, pointer-gated hover, press feedback, staggered album entrance, heart pop, artwork pulse, and reduced-motion support
-- Performance: `optimizePackageImports` for lucide-react and react-query
+- Performance: search filtering deferred with `useDeferredValue`, `content-visibility` on song rows, DNS preconnects for the iTunes API, `optimizePackageImports` for lucide-react, Base UI, and react-query
 
 ## Tech stack
 
@@ -129,16 +129,16 @@ It writes the screenshots, `demo.webm`, and the `demo.mp4` / `demo.gif` derived 
 
 ```
 src/
-  app/            routes (App Router): (app)/ shell group, login, signup, auth/callback
+  app/            routes (App Router): (app)/ shell group, about, login, signup, auth/callback, robots, sitemap
   components/
     ui/           shadcn primitives (button, dialog, sheet, slider, tooltip, kbd, skeleton, empty-state)
     layout/       app shell (sidebar, player bar, queue panel, mobile nav)
     features/     feature components (playlist form)
   hooks/          use-audio, use-delayed-flag
   stores/         Zustand (player)
-  lib/            utils, query client, Supabase clients, schemas, queries, iTunes, data
+  lib/            utils, query client, Supabase clients, schemas, queries, iTunes, data, library (repo seam)
   types/          shared types
-docs/             wiki (stack, architecture, design system, workflows, roadmap)
+docs/             wiki (concepts/, stack, architecture, design system, workflows, roadmap)
 e2e/              Playwright specs
 supabase/         migrations + seed
 scripts/          check-comments.mjs, capture-readme.mjs
@@ -147,11 +147,13 @@ scripts/          check-comments.mjs, capture-readme.mjs
 ## Docs
 
 - [docs/README.md](docs/README.md) — wiki index
+- [docs/concepts/](docs/concepts/) — the patterns: state ownership, the repository seam, server/client split, the audio engine, SEO & AI discovery
 - [docs/stack.md](docs/stack.md) — what we use and why
 - [docs/architecture.md](docs/architecture.md) — app structure and data flow
 - [docs/design-system.md](docs/design-system.md) — tokens, components, motion
 - [docs/workflows.md](docs/workflows.md) — dev commands and PR flow
 - [docs/roadmap.md](docs/roadmap.md) — the multi-phase plan
+- [docs/roadmap-post-mvp.md](docs/roadmap-post-mvp.md) — the post-MVP phases (persistence, likes, discovery)
 
 ## Contributing
 
@@ -168,5 +170,9 @@ Notes for contributors
 ## Status
 
 Phases 0–6 are complete and deployed to https://sunao-omega.vercel.app. Work after the
-original plan (real iTunes artwork and previews, motion polish, queue virtualization, the
-collapsible queue panel) shipped on top of it. See [docs/roadmap.md](docs/roadmap.md).
+original plan shipped on top of it: real iTunes artwork and previews, motion polish, queue
+virtualization, the collapsible queue panel, the SEO/discoverability surface, and post-MVP
+phases 7–8 (correctness fixes + the persistence foundation — likes and playlists now
+survive a reload without a backend, as machine-checked in `e2e/persistence.spec.ts`).
+Phase 9 ("Liked Songs" as a live projection of likes) is the open remainder of bug A.
+See [docs/roadmap.md](docs/roadmap.md) and [docs/roadmap-post-mvp.md](docs/roadmap-post-mvp.md).

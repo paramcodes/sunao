@@ -30,13 +30,13 @@ deliberately descoped, not outstanding work.
 - [x] 3.2 Search (filter songs/artists, empty state).
 - [x] 3.3 Library (list playlists, create playlist).
 - [x] 3.4 Playlist detail (play all, remove a song, empty state).
-- [ ] 3.5 Like/unlike songs persisted to Supabase — **descoped**: likes are session-only (in-memory Zustand Set). Revisit if persistence is needed.
+- [ ] 3.5 Like/unlike songs persisted to Supabase — **descoped here, shipped later**: phase 8 of `roadmap-post-mvp.md` launched the repository seam (`src/lib/library/`) so likes persist on-device, and in Supabase mode to the `liked_songs` table.
 
 ## Phase 4 — Auth (done)
 - [x] 4.1 Supabase auth (email + password).
 - [x] 4.2 Login/signup pages.
 - [x] 4.3 Protected routes / proxy.
-- [ ] 4.4 User profile + persisted liked songs — **descoped**: no profile page; likes session-only. OAuth descoped (email+password only).
+- [ ] 4.4 User profile + persisted liked songs — **descoped**: no profile page. Like persistence shipped via the repository seam (phase 8, `roadmap-post-mvp.md`); the "Liked Songs" projection (phase 9) is still open. OAuth descoped (email+password only).
 
 ## Phase 5 — Polish & perf (done)
 - [x] 5.1 Image optimization (next/image, album art).
@@ -55,8 +55,10 @@ Shipped after the original plan, outside the phase/PR structure:
 - Real artwork and 30-second previews from the iTunes Search API, with a bundled sample fallback and a Supabase artwork migration.
 - Motion polish: shared easing tokens, pointer-gated hover, press feedback, reduced-motion support.
 - Queue virtualization (TanStack Virtual) and the collapsible desktop queue panel.
-- Mobile shell: bottom nav, queue bottom sheet, compact player bar.
-- README and docs refresh with freshly recorded screenshots, GIF, and video.
+- Mobile shell: bottom nav, queue bottom sheet, compact player bar (44px touch targets).
+- Post-MVP phases 7–8 from `roadmap-post-mvp.md`: idle-player fix, mobile seek slider, time-of-day greeting, and the repository seam (`src/lib/library/`) putting playlists and likes in one versioned, Zod-validated store (localStorage; Supabase at parity with the `liked_songs` migration), with optimistic mutations.
+- SEO/discoverability (PR #10): per-route metadata, `robots.ts`, `sitemap.ts`, JSON-LD on `/about`, `llms.txt` — see `docs/concepts/seo-and-ai-discovery.md`.
+- Skill-review passes: search filtering deferred with `useDeferredValue`, skip-to-content link, stable keyboard-shortcut listener ref, DNS preconnects, `optimizePackageImports` for Base UI.
 
 ## Orchestration
 - Each phase is a separate PR. Subtasks are separate commits.
@@ -64,7 +66,6 @@ Shipped after the original plan, outside the phase/PR structure:
 
 ## Descoped / future work
 - Shuffle, repeat, and volume controls (prototype only; not in product scope).
-- Persisted likes and a user profile page.
+- "Liked Songs" as a live projection of likes (phase 9 remainder; the heart already persists).
 - OAuth providers (only email+password shipped).
 - Loading skeletons for search/library/playlist routes.
-- SEO metadata + server/client route split (in progress on `feat/seo-discoverability`).
