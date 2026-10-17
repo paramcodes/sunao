@@ -120,44 +120,39 @@ mosaic reflects membership; deleting a playlist removes it from the sidebar.
 
 ---
 
-## Phase 11 — Player controls (M)
+## Phase 11 — Player controls (M) — done
 
-- [ ] 11.1 Volume: slider + mute toggle, persisted, keyboard `↑`/`↓`.
-- [ ] 11.2 Shuffle: context-aware (shuffles remaining queue, keeps current), toggled + persisted.
-- [ ] 11.3 Repeat: off / all / one, wired into the `ended` handler.
-- [ ] 11.4 Shortcuts: next/prev/like alongside the existing Space, guarded against inputs.
+- [x] 11.1 Volume: slider + mute toggle, persisted, keyboard `↑`/`↓`.
+- [x] 11.2 Shuffle: context-aware (shuffles remaining queue, keeps current), toggled + persisted.
+- [x] 11.3 Repeat: off / all / one, wired into the `ended` handler.
+- [x] 11.4 Shortcuts: next/prev/like alongside the existing Space, guarded against inputs.
 
 **Acceptance:** controls reflect state and survive reload; shuffle visibly reorders the queue;
 repeat-one loops a track; shortcuts work and don't fire while typing.
 
-**Risk:** shuffle/repeat touch the store, the queue, and the audio `ended` path together —
-design the queue model first (see `principle-model-the-domain`).
-
 ---
 
-## Phase 12 — Search & discovery (L)
+## Phase 12 — Search & discovery (L) — done
 
-Today search is a substring filter over 12 bundled songs.
+Today search queries the live iTunes catalog with offline fallback.
 
-- [ ] 12.1 Search tabs: Songs / Albums / Artists / Playlists, plus recent searches.
-- [ ] 12.2 Real catalog search via the iTunes Search API (extend `lib/itunes.ts`), debounced,
+- [x] 12.1 Search tabs: Songs / Albums / Artists / Playlists, plus recent searches.
+- [x] 12.2 Real catalog search via the iTunes Search API (extend `lib/itunes.ts`), debounced,
       aborted on new input, error + empty states.
-- [ ] 12.3 Artist and Album detail routes (`/artist/[id]`, `/album/[id]`).
-- [ ] 12.4 Home sections: Recently played + a "Made for you" row from play history.
+- [x] 12.3 Artist and Album detail routes (`/artist/[id]`, `/album/[id]`).
+- [x] 12.4 Home sections: Recently played + a "Made for you" row from play history.
 
 **Acceptance:** typing hits the API (network observable), each tab filters correctly, detail
 routes render and play, empty/loading states shown, recent searches persist.
 
-**Risk:** external API rate limits and CORS; keep the bundled dataset as an offline fallback.
-
 ---
 
-## Phase 13 — Now-playing & mobile (M)
+## Phase 13 — Now-playing & mobile (M) — done
 
-- [ ] 13.1 Now-playing view: expand from the player bar into a full-screen panel (big art,
+- [x] 13.1 Now-playing view: expand from the player bar into a full-screen panel (big art,
       controls, queue link) — replaces the current Fullscreen-API button.
-- [ ] 13.2 Mobile bottom-sheet player with swipe-up to open and swipe-down to dismiss.
-- [ ] 13.3 Lyrics panel (placeholder provider first, real source later).
+- [x] 13.2 Mobile bottom-sheet player with swipe-up to open and swipe-down to dismiss.
+- [x] 13.3 Lyrics panel (placeholder provider first, real source later).
 
 **Acceptance:** expand/collapse animates without layout shift; swipe gestures work on a touch
 profile; focus returns to the trigger on close.
