@@ -10,6 +10,6 @@ describe("Home", () => {
         <Home />
       </QueryClientProvider>,
     );
-    expect(screen.getByText("Good evening")).toBeInTheDocument();
+    expect(screen.getByText(/Good (morning|afternoon|evening)/)).toBeInTheDocument();
   });
 });

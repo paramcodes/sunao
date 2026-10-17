@@ -1,0 +1,118 @@
+# sunao — full content bundle
+
+This file is the machine-readable full-content bundle for sunao (an AI-friendly dump of the site's key facts). It mirrors llms.txt but with more detail. Last updated: 2026-10-17.
+
+## About sunao
+
+sunao is a Spotify-like music player: a web app for browsing albums and songs, searching, building playlists, and playing 30-second previews. It has a red theme and a dark UI. It is built with Next.js 16, React 19, Tailwind v4, shadcn/ui on Base UI, Supabase, Zustand, and TanStack Query. It runs with or without a Supabase backend (static seed data fallback when env vars are unset).
+
+## What problem it solves
+
+A reference implementation of a modern, accessible, motion-polished music player on the Next.js App Router, demonstrating playback, search, playlists, a virtualized queue, and optional Supabase auth. Useful as a template or learning resource for "Spotify-like music player" and "Next.js music player" queries.
+
+## Tech stack
+
+- Next.js 16 (App Router, Turbopack) and React 19
+- TypeScript (strict)
+- Tailwind CSS v4 and shadcn/ui primitives on Base UI
+- Zustand (player state), TanStack Query + Virtual (server state and queue)
+- Supabase (Postgres, Auth, RLS) and Zod (boundary validation)
+- Vitest + React Testing Library, Playwright (E2E)
+- Biome (lint and format), Husky + lint-staged
+
+## Routes
+
+- / — Home: greeting, album grid (click to play), full song list
+- /search — Search songs by title or artist, with empty state
+- /library — List playlists, create a new one
+- /playlist/{id} — Playlist detail: cover, song count, play all, remove song, empty state
+- /login — Email/password sign in
+- /signup — Email/password sign up
+- /auth/callback — Supabase confirmation callback
+- /about — About sunao, FAQ, comparison (sunao vs Spotify)
+
+## Playback features
+
+- Play / pause, previous / next, auto-advance when a track ends
+- Seek scrubber bound to the audio element's real duration, with position and total labels
+- Playback speed: 0.5x, 1x, 1.25x, 1.5x, 2x
+- Like / unlike the current track (session-only, in memory; not persisted)
+- Buffering spinner, debounced 200ms
+- Audio: 30-second previews from the iTunes Search API (no key), cached per title + artist, falling back to a bundled sample tone
+- Album artwork from the iTunes CDN, served through next/image
+
+## Queue and now playing
+
+- Now-playing card and a windowed (virtualized) queue; click any row to jump
+- Collapsible queue panel at lg and up: narrows to a 40px rail instead of unmounting, so the toggle stays reachable and scroll position survives; collapsed content is inert
+- Mobile queue in a bottom sheet
+
+## Auth (optional)
+
+- Email and password sign in / sign up, plus /auth/callback for confirmation links
+- src/proxy.ts refreshes the session and protects /library and /playlist/*
+- With Supabase env vars unset, the app runs without a backend: static seed data, in-memory playlists, no auth
+
+## Mobile
+
+- Bottom nav (Home / Search / Library / Queue) below lg, replacing the hidden sidebar
+- Compact player bar with a 2px progress line; seek bar and speed control from md up
+- Safe-area padding on the bottom nav
+
+## Accessibility
+
+- ARIA labels and states on player controls, tooltips with keyboard hints
+- Space toggles play/pause, focus-visible ring, inert collapsed panels
+- Skip-to-main-content link, main content landmark
+
+## Motion
+
+- Shared easing tokens, pointer-gated hover, press feedback, staggered album entrance, heart pop, artwork pulse, reduced-motion support
+
+## Performance
+
+- optimizePackageImports for lucide-react and react-query
+- Virtualized queue
+
+## Data and attribution
+
+- Songs and albums: static seed data (src/lib/data/songs.ts) plus optional Supabase
+- Preview audio and artwork: iTunes Search API and iTunes CDN
+- No user tracking beyond standard Vercel analytics (if enabled)
+
+## FAQ
+
+Q: What is sunao?
+A: sunao is a Spotify-like music player web app built with Next.js 16 and React 19. It streams 30-second previews from the iTunes Search API, shows album artwork, and supports search, playlists, a virtualized queue, and playback speed control. It runs with or without a Supabase backend.
+
+Q: Does sunao require a backend?
+A: No. With the Supabase environment variables unset, sunao runs on static seed data with in-memory playlists and no auth.
+
+Q: What audio does sunao play?
+A: 30-second previews from the iTunes Search API (no API key required), cached per title and artist, falling back to a bundled sample tone.
+
+Q: Is sunao free / open source?
+A: sunao is a demo/portfolio project. There is no pricing and no paid tiers; it is free to run locally.
+
+Q: How do I run sunao locally?
+A: Prerequisites Node 20+ and pnpm 12+. Run: pnpm install, cp .env.example .env.local (optional), pnpm dev, then open http://localhost:3000.
+
+Q: Does sunao work on mobile?
+A: Yes. It has a bottom nav, compact player bar, and a mobile queue bottom sheet, with safe-area padding.
+
+## Comparison: sunao vs Spotify
+
+| Feature | sunao | Spotify |
+|---|---|---|
+| Price | Free (demo) | Freemium / Premium |
+| Audio | 30s iTunes previews | Full tracks |
+| Account required | No (optional) | Yes |
+| Playlists | Yes (local/Supabase) | Yes (cloud) |
+| Offline playback | No | Yes (Premium) |
+| Open source | Yes (demo) | No |
+
+## Links
+
+- Home: /
+- About: /about
+- Repository: (see project README)

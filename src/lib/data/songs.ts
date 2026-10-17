@@ -1,14 +1,4 @@
-import type { Playlist, Song } from "@/types";
-
-export type Album = {
-  id: string;
-  title: string;
-  artist: string;
-  year: number;
-  color: string;
-  artwork?: string;
-  songs: number[];
-};
+import type { Album, Playlist, Song } from "@/types";
 
 export const SONGS: Song[] = [
   {
@@ -181,9 +171,3 @@ export const PLAYLISTS: Playlist[] = [
   { id: "p2", name: "Late Night Drives", songIds: [2, 6, 9], cover: "#b20710", system: false },
   { id: "p3", name: "Workout", songIds: [4, 11, 1], cover: "#7f1d1d", system: false },
 ];
-
-export function getSong(id: number): Song | undefined {
-  return SONGS.find((song) => song.id === id);
-}
-
-export const SONG_BY_ID = new Map(SONGS.map((song) => [song.id, song]));

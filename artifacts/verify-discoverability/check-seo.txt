@@ -1,0 +1,33 @@
+PASS  GET / returns 200                                  status 200
+PASS  GET /search returns 200                            status 200
+PASS  GET /library returns 200                           status 200
+PASS  GET /login returns 200                             status 200
+PASS  GET /signup returns 200                            status 200
+PASS  GET /playlist/p1 returns 200                       status 200
+PASS  every route has a <title>                          missing on none
+PASS  titles are unique per route                        duplicates: none
+PASS  every route has a meta description                 missing on none
+PASS  descriptions are unique per route                  duplicates: none
+PASS  descriptions are at least 50 chars                 too short on none
+PASS  every route has a canonical link                   missing on none
+PASS  canonicals are absolute and match the served base  all 6 start with http://localhost:3001
+PASS  every route has og:title                           missing on none
+PASS  every route has og:description                     missing on none
+PASS  every route has og:image                           missing on none
+PASS  every route has twitter:card                       missing on none
+PASS  openGraph keeps type, site_name, url, and locale   present on all routes
+PASS  og:image resolves with 200                         /opengraph-image -> 200
+PASS  og:image is served as an image                     content-type image/png
+PASS  robots.txt returns 200                             status 200
+PASS  robots.txt allows crawling                         wildcard user-agent with allow /
+PASS  robots.txt points at a sitemap                     Sitemap: http://localhost:3001/sitemap.xml
+PASS  sitemap.xml returns 200                            status 200
+PASS  sitemap.xml is xml                                 urlset present
+PASS  sitemap lists every indexable route                all 3 indexable routes listed
+PASS  sitemap excludes noindex routes                    none of 3 noindex routes listed
+PASS  noindex routes emit a noindex robots meta          all 3 marked noindex
+PASS  robots.txt does not disallow noindex routes        no conflict across 1 disallow rule(s)
+PASS  playlist page has JSON-LD                          1 block(s)
+PASS  JSON-LD parses with @context and @type             @type MusicPlaylist
+
+31/31 checks passed against http://localhost:3001

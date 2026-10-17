@@ -32,7 +32,7 @@ export function MobileNav() {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium transition-colors duration-150 ease-out active:scale-[0.96]",
+                "flex flex-1 flex-col items-center gap-1 py-3 text-[10px] font-medium transition-colors duration-150 ease-out active:scale-[0.96] min-h-11",
                 active ? "text-white" : "text-white/55",
               )}
             >
@@ -44,7 +44,7 @@ export function MobileNav() {
         <button
           type="button"
           onClick={() => setQueueOpen(true)}
-          className="flex flex-1 flex-col items-center gap-1 py-2 text-[10px] font-medium text-white/55 transition-colors duration-150 ease-out active:scale-[0.96]"
+          className="flex flex-1 flex-col items-center gap-1 py-3 text-[10px] font-medium text-white/55 transition-colors duration-150 ease-out active:scale-[0.96] min-h-11"
         >
           <ListMusic className="h-5 w-5" />
           Queue

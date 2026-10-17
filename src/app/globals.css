@@ -123,8 +123,8 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
+  --primary: oklch(0.59 0.25 27);
+  --primary-foreground: oklch(1 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
@@ -154,6 +154,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  button {
+    cursor: pointer;
+  }
   body {
     @apply bg-background font-sans text-foreground;
   }
@@ -164,9 +167,9 @@
 .dark {
   --red: oklch(0.59 0.25 27);
   --red-dark: oklch(0.47 0.22 27);
-  --bg: oklch(0.14 0 0);
-  --bg-elev: oklch(0.17 0 0);
-  --bg-card: oklch(0.2 0 0);
+  --bg: oklch(0.12 0 0);
+  --bg-elev: oklch(0.18 0 0);
+  --bg-card: oklch(0.24 0 0);
   --fg-muted: oklch(0.72 0 0);
 }
 
@@ -212,11 +215,10 @@
     *,
     *::before,
     *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
+      animation: none !important;
       scroll-behavior: auto !important;
       transition-property: opacity, color, background-color, border-color !important;
-      transition-duration: 150ms !important;
+      transition-duration: 100ms !important;
     }
   }
 }
@@ -242,4 +244,10 @@
 }
 .scroll-pane::-webkit-scrollbar-thumb:hover {
   background-color: oklch(1 0 0 / 0.35);
+}
+
+/* Defer off-screen rendering for long lists of rows. */
+.song-row {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 44px;
 }

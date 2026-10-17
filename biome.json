@@ -35,6 +35,10 @@
   "css": { "parser": { "tailwindDirectives": true }, "formatter": { "enabled": true } },
   "overrides": [
     {
+      "includes": ["src/app/about/about-client.tsx"],
+      "linter": { "rules": { "security": { "noDangerouslySetInnerHtml": "off" } } }
+    },
+    {
       "includes": ["scripts/check-comments.mjs"],
       "linter": { "rules": { "suspicious": { "noConsole": "off" } } }
     },

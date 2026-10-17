@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
-import { SONGS } from "@/lib/data/songs";
 import { fetchPreviewUrl } from "@/lib/itunes";
+import { useSongs } from "@/lib/queries";
 import { usePlayer } from "@/stores/player";
 
 export function useAudio() {
@@ -11,6 +11,8 @@ export function useAudio() {
   const isPlaying = usePlayer((state) => state.isPlaying);
   const speed = usePlayer((state) => state.speed);
   const position = usePlayer((state) => state.position);
+  const { data: songs = [] } = useSongs();
+  const lastLoadKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof Audio === "undefined") return;
@@ -69,13 +71,17 @@ export function useAudio() {
     const audio = audioRef.current;
     if (!audio) return;
     const song =
-      currentSongId === null ? null : (SONGS.find((item) => item.id === currentSongId) ?? null);
+      currentSongId === null ? null : (songs.find((item) => item.id === currentSongId) ?? null);
     if (!song) {
+      lastLoadKeyRef.current = null;
       audio.src = "";
       usePlayer.getState().setBuffering(false);
       usePlayer.getState().setDuration(null);
       return;
     }
+    const loadKey = `${currentSongId}:${songs.length}`;
+    if (lastLoadKeyRef.current === loadKey) return;
+    lastLoadKeyRef.current = loadKey;
     const requestId = currentSongId;
     let cancelled = false;
     usePlayer.getState().setBuffering(true);
@@ -94,7 +100,7 @@ export function useAudio() {
     return () => {
       cancelled = true;
     };
-  }, [currentSongId]);
+  }, [currentSongId, songs]);
 
   useEffect(() => {
     const audio = audioRef.current;

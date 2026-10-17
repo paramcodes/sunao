@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Figtree, Geist_Mono } from "next/font/google";
+import { preconnect, prefetchDNS } from "react-dom";
 import { Toaster } from "sonner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PlayerProvider } from "@/components/player-provider";
@@ -22,14 +23,32 @@ export const metadata: Metadata = {
   description: "A Spotify-like music player",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0f0f0f",
+  colorScheme: "dark",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  prefetchDNS("https://itunes.apple.com");
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    preconnect(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  }
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className={`${figtree.variable} ${geistMono.variable} antialiased`}>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100] focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-black focus:shadow-lg"
+        >
+          Skip to main content
+        </a>
         <Providers>
           <TooltipProvider>
             <PlayerProvider>

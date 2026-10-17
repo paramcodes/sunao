@@ -1,12 +1,16 @@
 "use client";
 
 import { ArrowLeft, Play, X } from "lucide-react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use, useMemo } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
-import { usePlaylist, useSongs } from "@/lib/queries";
+import { Skeleton } from "@/components/ui/skeleton";
+import { usePlaylist, useSetPlaylistSongs, useSongs } from "@/lib/queries";
 import { usePlayer } from "@/stores/player";
 import type { Song } from "@/types";
+
+const SKELETON_ROWS = [1, 2, 3, 4, 5];
 
 export default function PlaylistPage({ params }: { params?: Promise<{ id: string }> }) {
   const { id } = use(params ?? Promise.resolve({ id: "" }));
@@ -15,12 +19,27 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
   const { data: allSongs = [] } = useSongs();
   const play = usePlayer((s) => s.play);
   const setQueue = usePlayer((s) => s.setQueue);
-  const [removed, setRemoved] = useState<Set<number>>(new Set());
+  const setSongs = useSetPlaylistSongs();
+
+  const songById = useMemo(() => new Map(allSongs.map((song) => [song.id, song])), [allSongs]);
 
   if (isLoading) {
     return (
       <main className="scroll-pane flex-1 overflow-y-auto p-4 sm:p-6">
-        <p className="text-white/60">Loading...</p>
+        <Skeleton className="mb-4 h-8 w-24" />
+        <div className="flex items-center gap-6">
+          <Skeleton className="h-40 w-40 shrink-0 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="mt-4 h-9 w-28 rounded-full" />
+          </div>
+        </div>
+        <div className="mt-8 space-y-2">
+          {SKELETON_ROWS.map((i) => (
+            <Skeleton key={`row-${i}`} className="h-12 w-full rounded" />
+          ))}
+        </div>
       </main>
     );
   }
@@ -34,14 +53,24 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
         >
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <p className="text-lg font-semibold text-red-500">Playlist not found</p>
+        <EmptyState
+          title="Playlist not found"
+          description="It may have been deleted or the link is broken."
+          action={
+            <button
+              onClick={() => router.back()}
+              className="rounded-full bg-red-600 px-4 py-1.5 text-sm text-white transition-colors duration-150 ease-out hover:bg-red-700 active:scale-95"
+            >
+              Go back
+            </button>
+          }
+        />
       </main>
     );
   }
 
-  const songIds = playlist.songIds.filter((sid) => !removed.has(sid));
-  const songs = songIds
-    .map((sid) => allSongs.find((s) => s.id === sid))
+  const songs = playlist.songIds
+    .map((sid) => songById.get(sid))
     .filter((s): s is Song => Boolean(s));
 
   const playAll = () => {
@@ -51,10 +80,9 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
   };
 
   const remove = (songId: number) => {
-    setRemoved((prev) => {
-      const next = new Set(prev);
-      next.add(songId);
-      return next;
+    setSongs.mutate({
+      id,
+      songIds: playlist.songIds.filter((sid) => sid !== songId),
     });
   };
 
@@ -86,11 +114,24 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
           {songs.map((s, i) => (
             <div
               key={s.id}
-              className="group/row flex w-full items-center gap-3 rounded px-3 py-2 transition-colors duration-150 ease-out hover:bg-white/5"
+              className="song-row group/row flex w-full items-center gap-3 rounded px-3 py-2 transition-colors duration-150 ease-out hover:bg-white/5"
             >
               <button onClick={() => play(s)} className="flex flex-1 items-center gap-3 text-left">
                 <span className="w-6 text-right text-sm tabular-nums text-white/40">{i + 1}</span>
-                <div className="h-10 w-10 shrink-0 rounded" style={{ background: s.color }} />
+                <div
+                  className="relative h-10 w-10 shrink-0 overflow-hidden rounded"
+                  style={{ background: s.color }}
+                >
+                  {s.artwork ? (
+                    <Image
+                      src={s.artwork}
+                      alt={s.title}
+                      fill
+                      sizes="40px"
+                      className="object-cover"
+                    />
+                  ) : null}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{s.title}</p>
                   <p className="truncate text-xs text-white/50">{s.artist}</p>
@@ -101,8 +142,8 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
               </button>
               <button
                 onClick={() => remove(s.id)}
-                aria-label="Remove"
-                className="flex h-8 w-8 items-center justify-center rounded-full text-white/40 opacity-0 transition-[color,background-color,opacity,transform] duration-150 ease-out group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-white/10 hover:text-red-500 active:scale-90"
+                aria-label={`Remove ${s.title}`}
+                className="flex h-10 w-10 items-center justify-center rounded-full text-white/40 opacity-0 transition-[color,background-color,opacity,transform] duration-150 ease-out group-hover/row:opacity-100 focus-visible:opacity-100 hover:bg-white/10 hover:text-red-500 active:scale-90"
               >
                 <X className="h-4 w-4" />
               </button>

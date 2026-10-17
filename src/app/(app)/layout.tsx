@@ -8,7 +8,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex h-dvh flex-col overflow-hidden">
       <div className="flex min-h-0 flex-1">
         <Sidebar />
-        {children}
+        <div id="main-content" tabIndex={-1} className="contents">
+          {children}
+        </div>
         <QueuePanel />
       </div>
       <PlayerBar />

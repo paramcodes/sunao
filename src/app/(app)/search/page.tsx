@@ -1,7 +1,8 @@
 "use client";
 
 import { Play, Search as SearchIcon } from "lucide-react";
-import { useState } from "react";
+import Image from "next/image";
+import { useDeferredValue, useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useSongs } from "@/lib/queries";
 import { usePlayer } from "@/stores/player";
@@ -9,15 +10,18 @@ import { usePlayer } from "@/stores/player";
 export default function SearchPage() {
   const [q, setQ] = useState("");
   const play = usePlayer((s) => s.play);
-  const { data: songs = [] } = useSongs();
+  const setQueue = usePlayer((s) => s.setQueue);
+  const { data: songs = [], isError, isLoading } = useSongs();
 
-  const results = q
-    ? songs.filter(
-        (s) =>
-          s.title.toLowerCase().includes(q.toLowerCase()) ||
-          s.artist.toLowerCase().includes(q.toLowerCase()),
-      )
-    : songs;
+  const deferredQuery = useDeferredValue(q);
+  const results = useMemo(() => {
+    if (!deferredQuery) return songs;
+    const needle = deferredQuery.toLowerCase();
+    return songs.filter(
+      (s) => s.title.toLowerCase().includes(needle) || s.artist.toLowerCase().includes(needle),
+    );
+  }, [songs, deferredQuery]);
+  const isStale = q !== deferredQuery;
 
   return (
     <main className="scroll-pane flex-1 overflow-y-auto p-4 sm:p-6">
@@ -28,24 +32,54 @@ export default function SearchPage() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="What do you want to listen to?"
-          className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/40"
+          aria-label="Search songs"
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-white/40 focus-visible:ring-2 focus-visible:ring-red-500"
         />
       </div>
-      {results.length === 0 ? (
-        <EmptyState title="No results" description="Try a different search term." />
+      {isLoading ? (
+        <div className="mt-6 h-48 animate-pulse rounded-lg bg-white/5" aria-busy="true" />
+      ) : isError ? (
+        <EmptyState
+          title="Couldn't load songs"
+          description="Check your connection and try again."
+        />
+      ) : results.length === 0 ? (
+        <EmptyState
+          title="No results"
+          description="Try a different search term."
+          action={
+            q ? (
+              <button
+                onClick={() => setQ("")}
+                className="rounded-full bg-white/10 px-4 py-1.5 text-sm text-white transition-colors duration-150 ease-out hover:bg-white/20 active:scale-95"
+              >
+                Clear search
+              </button>
+            ) : undefined
+          }
+        />
       ) : (
-        <div className="mt-6 space-y-1">
-          {results.map((s, i) => (
+        <div className="mt-6 space-y-1" style={{ opacity: isStale ? 0.7 : 1 }}>
+          {results.map((s) => (
             <button
               key={s.id}
-              onClick={() => play(s)}
-              className="flex w-full items-center gap-3 rounded px-3 py-2 text-left transition-colors duration-150 ease-out hover:bg-white/5"
+              onClick={() => {
+                setQueue(results.map((song) => song.id));
+                play(s);
+              }}
+              className="song-row flex w-full items-center gap-3 rounded px-3 py-2 text-left transition-colors duration-150 ease-out hover:bg-white/5"
             >
-              <span className="w-6 text-right text-sm tabular-nums text-white/40">{i + 1}</span>
-              <div className="h-10 w-10 shrink-0 rounded" style={{ background: s.color }} />
+              <div
+                className="relative h-10 w-10 shrink-0 overflow-hidden rounded"
+                style={{ background: s.color }}
+              >
+                {s.artwork ? (
+                  <Image src={s.artwork} alt={s.title} fill sizes="40px" className="object-cover" />
+                ) : null}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{s.title}</p>
-                <p className="truncate text-xs text-white/50">{s.artist}</p>
+                <p className="truncate text-xs text-white/60">{s.artist}</p>
               </div>
               <span className="text-xs text-white/50 tabular-nums">
                 {Math.floor(s.duration / 60)}:{String(s.duration % 60).padStart(2, "0")}

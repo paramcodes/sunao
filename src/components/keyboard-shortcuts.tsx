@@ -1,10 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { usePlayer } from "@/stores/player";
 
 export function KeyboardShortcuts() {
   const togglePlay = usePlayer((s) => s.togglePlay);
+  const togglePlayRef = useRef(togglePlay);
+  useEffect(() => {
+    togglePlayRef.current = togglePlay;
+  }, [togglePlay]);
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
@@ -17,12 +21,12 @@ export function KeyboardShortcuts() {
       }
       if (event.code === "Space") {
         event.preventDefault();
-        togglePlay();
+        togglePlayRef.current();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [togglePlay]);
+  }, []);
 
   return null;
 }

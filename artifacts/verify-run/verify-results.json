@@ -1,0 +1,426 @@
+{
+  "summary": {
+    "base": "http://localhost:3001",
+    "total": 68,
+    "passed": 67,
+    "failed": 1,
+    "failures": [
+      {
+        "feature": "library-playlists",
+        "check": "created-playlist-detail",
+        "ok": false,
+        "detail": "PRODUCT GAP: http://localhost:3001/playlist/f8e66ee2-ee3e-4727-8006-eef20a46ef7f renders 404 without Supabase"
+      }
+    ]
+  },
+  "results": [
+    {
+      "feature": "home",
+      "check": "greeting",
+      "ok": true,
+      "detail": "Good evening"
+    },
+    {
+      "feature": "home",
+      "check": "sidebar-home-current",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "home",
+      "check": "sidebar-search-link",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "home",
+      "check": "album-grid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "home",
+      "check": "songs-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "home",
+      "check": "song-row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "home",
+      "check": "player-bar-preloaded",
+      "ok": true,
+      "detail": "Come Together The Beatles 0:00 4:18 1×"
+    },
+    {
+      "feature": "home",
+      "check": "album-click-plays",
+      "ok": true,
+      "detail": "Dreams Fleetwood Mac 0:00 4:14 1×"
+    },
+    {
+      "feature": "data-layer",
+      "check": "album:Abbey Road",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "data-layer",
+      "check": "album:Rumours",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "data-layer",
+      "check": "album:Thriller",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "data-layer",
+      "check": "album:Back In Black",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "data-layer",
+      "check": "artwork-images-present",
+      "ok": true,
+      "detail": "30 mzstatic images"
+    },
+    {
+      "feature": "data-layer",
+      "check": "library-playlists",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "data-layer",
+      "check": "playlist-detail",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "data-layer",
+      "check": "playlist-rows",
+      "ok": true,
+      "detail": "5 candidate rows"
+    },
+    {
+      "feature": "search",
+      "check": "heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "search",
+      "check": "input",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "search",
+      "check": "all-songs-default",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "search",
+      "check": "title-filter",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "search",
+      "check": "artist-filter",
+      "ok": true,
+      "detail": "4 Beatles results"
+    },
+    {
+      "feature": "search",
+      "check": "empty-state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "search",
+      "check": "restore-full-list",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "seed:Liked Songs",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "seed:Late Night Drives",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "seed:Workout",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "create-form",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "create-result",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "created-playlist-detail",
+      "ok": false,
+      "detail": "PRODUCT GAP: http://localhost:3001/playlist/f8e66ee2-ee3e-4727-8006-eef20a46ef7f renders 404 without Supabase"
+    },
+    {
+      "feature": "library-playlists",
+      "check": "seeded-detail",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "play-all",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "play-all-starts",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "library-playlists",
+      "check": "remove-song",
+      "ok": true,
+      "detail": "5 songs -> 4 songs"
+    },
+    {
+      "feature": "library-playlists",
+      "check": "empty-state-after-removing-all",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "login-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "login-email",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "login-password",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "login-submit",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "signup-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "signup-cross-link",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "no-env-library-not-gated",
+      "ok": true,
+      "detail": "http://localhost:3001/library"
+    },
+    {
+      "feature": "auth",
+      "check": "signed-out-indicator",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "auth",
+      "check": "no-env-sign-in-does-not-navigate",
+      "ok": true,
+      "detail": "http://localhost:3001/login"
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "panel-visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "rows-present",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "now-playing-heading",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "open-width",
+      "ok": true,
+      "detail": "288px"
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "collapse-width",
+      "ok": true,
+      "detail": "40px"
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "collapsed-inert",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "show-queue-label",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "expand-inert-cleared",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "row-click-plays",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "now-playing-card-plays",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "mobile-nav-visible",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "desktop-panel-hidden",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "nav-items",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "sheet-open",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "queue-and-mobile",
+      "check": "sheet-closed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "player-bar",
+      "check": "starts-paused",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "player-bar",
+      "check": "now-playing-text",
+      "ok": true,
+      "detail": "Come Together The Beatles 0:00 0:30 1×"
+    },
+    {
+      "feature": "player-bar",
+      "check": "pause-state",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "player-bar",
+      "check": "prev-next-enabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "player-bar",
+      "check": "seek-moves",
+      "ok": true,
+      "detail": "0.434733 -> 0.662016"
+    },
+    {
+      "feature": "player-bar",
+      "check": "speed-changes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "feature": "player-bar",
+      "check": "like-toggles",
+      "ok": true,
+      "detail": "initial=Unlike"
+    },
+    {
+      "feature": "player-bar",
+      "check": "next-track",
+      "ok": true,
+      "detail": "Something The Beatles 0:00 3:02 1.5×"
+    },
+    {
+      "feature": "player-bar",
+      "check": "space-toggles",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
