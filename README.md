@@ -4,7 +4,12 @@ A Spotify-like music player. Red theme, dark UI. Built with Next.js 15, Tailwind
 
 **Live demo:** https://sunao-omega.vercel.app
 
-![Demo](artifacts/readme/demo.gif)
+<video autoplay loop muted playsinline width="960">
+  <source src="https://raw.githubusercontent.com/paramcodes/sunao/main/artifacts/readme/demo.webm" type="video/webm" />
+  <source src="https://raw.githubusercontent.com/paramcodes/sunao/main/artifacts/readme/demo.mp4" type="video/mp4" />
+</video>
+
+Fallback (GIF): ![Demo](artifacts/readme/demo.gif)
 
 ## Screenshots
 
