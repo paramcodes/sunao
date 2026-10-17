@@ -48,3 +48,6 @@ playwright-report/
 .agents/
 
 todo.md
+
+# agent worktrees
+.worktrees/
