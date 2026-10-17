@@ -5,6 +5,7 @@ export type Song = {
   album: string;
   duration: number;
   color: string;
+  artwork?: string;
 };
 
 export type Playlist = {

@@ -10,6 +10,7 @@ import {
   SkipBack,
   SkipForward,
 } from "lucide-react";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Kbd } from "@/components/ui/kbd";
@@ -30,7 +31,10 @@ function MobileProgress() {
   const pct = duration ? Math.min(100, (position / duration) * 100) : 0;
   return (
     <div className="absolute inset-x-0 top-0 h-0.5 bg-white/10 md:hidden">
-      <div className="h-full bg-white" style={{ width: `${pct}%` }} />
+      <div
+        className="h-full w-full origin-left bg-white"
+        style={{ transform: `scaleX(${pct / 100})` }}
+      />
     </div>
   );
 }
@@ -41,7 +45,7 @@ function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
   const seek = usePlayer((s) => s.seek);
   const [scrub, setScrub] = useState<number | null>(null);
 
-  const max = duration ?? fallbackDuration;
+  const max = Number.isFinite(duration) ? (duration as number) : fallbackDuration;
   const shown = scrub ?? position;
 
   return (
@@ -69,6 +73,14 @@ function LikeButton({ songId }: { songId: number }) {
   const liked = usePlayer((s) => s.liked);
   const toggleLike = usePlayer((s) => s.toggleLike);
   const isLiked = liked.has(songId);
+  const [pop, setPop] = useState(false);
+
+  useEffect(() => {
+    if (!isLiked) return;
+    setPop(true);
+    const t = setTimeout(() => setPop(false), 200);
+    return () => clearTimeout(t);
+  }, [isLiked]);
 
   return (
     <Tooltip>
@@ -94,7 +106,13 @@ function LikeButton({ songId }: { songId: number }) {
           />
         }
       >
-        <Heart className={cn("h-[18px] w-[18px]", isLiked && "fill-current")} />
+        <Heart
+          className={cn(
+            "h-[18px] w-[18px] transition-transform duration-200 ease-out",
+            pop && "scale-125",
+            isLiked && "fill-current",
+          )}
+        />
       </TooltipTrigger>
       <TooltipContent>{isLiked ? "Remove from Liked Songs" : "Save to Liked Songs"}</TooltipContent>
     </Tooltip>
@@ -108,7 +126,7 @@ function SpeedControl() {
   return (
     <div className="group relative hidden md:block">
       <button className="btn-ghost rounded-lg px-3 py-1.5 text-sm font-semibold">{speed}×</button>
-      <div className="invisible absolute right-0 bottom-full mb-2 flex origin-bottom-right translate-y-1 scale-95 flex-col gap-1 rounded-lg border border-white/10 bg-[#1f1f1f] p-2 opacity-0 shadow-2xl transition-[opacity,transform,visibility] duration-150 ease-out group-hover:visible group-hover:translate-y-0 group-hover:scale-100 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100">
+      <div className="invisible absolute right-0 bottom-full mb-2 flex origin-bottom-right translate-y-1 scale-95 flex-col gap-1 rounded-lg border border-white/10 bg-[#1f1f1f] p-2 opacity-0 shadow-2xl transition-[opacity,transform,visibility] duration-150 ease-out [@media(hover:hover)]:group-hover:visible [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:scale-100 [@media(hover:hover)]:group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100">
         {[0.5, 1, 1.25, 1.5, 2].map((v) => (
           <button
             key={v}
@@ -176,6 +194,7 @@ export function PlayerBar() {
   const prev = usePlayer((s) => s.prev);
 
   const song = SONGS.find((s) => s.id === currentSongId) ?? SONGS[0];
+  if (!song) return null;
 
   return (
     <div
@@ -189,10 +208,17 @@ export function PlayerBar() {
         className="btn-ghost flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 sm:flex-none"
       >
         <div
-          className="h-12 w-12 shrink-0 rounded-lg sm:h-14 sm:w-14"
-          style={{ background: song.color }}
-        />
-        <div className="min-w-0 text-left sm:w-44">
+          className={cn(
+            "relative h-12 w-12 shrink-0 overflow-hidden rounded-lg sm:h-14 sm:w-14",
+            isPlaying && "motion-safe:animate-[sunao-pulse_2.4s_ease-in-out_infinite]",
+          )}
+          style={{ background: song.color ?? "#282828" }}
+        >
+          {song.artwork && (
+            <Image src={song.artwork} alt="" fill sizes="56px" className="object-cover" />
+          )}
+        </div>
+        <div className="min-w-0 text-left sm:max-w-44">
           <p className="truncate text-sm font-semibold">{song.title}</p>
           <p className="truncate text-xs text-white/60">{song.artist}</p>
         </div>
@@ -219,7 +245,7 @@ export function PlayerBar() {
               <button
                 onClick={togglePlay}
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white transition-[background-color,transform] duration-150 ease-out hover:bg-red-700 active:scale-95"
+                className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white transition-[background-color,transform] duration-normal ease-out hover:bg-red-700 active:scale-95"
               />
             }
           >

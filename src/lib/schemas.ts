@@ -7,6 +7,7 @@ export const SongSchema = z.object({
   album: z.string(),
   duration: z.number(),
   color: z.string(),
+  artwork: z.string().optional(),
 });
 
 export type Song = z.infer<typeof SongSchema>;
@@ -17,6 +18,7 @@ export const AlbumSchema = z.object({
   artist: z.string(),
   year: z.number(),
   color: z.string(),
+  artwork: z.string().optional(),
   songs: z.array(z.number()),
 });
 

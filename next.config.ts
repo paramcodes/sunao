@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "**.mzstatic.com" }],
+  },
   /* config options here */
   experimental: {
     optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
