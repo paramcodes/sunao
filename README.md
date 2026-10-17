@@ -34,19 +34,25 @@ Playback
 Browse
 - Home: album grid + song list (click a song to play)
 - Search: filter songs by title or artist; empty state when nothing matches
-- Library: list playlists, create a playlist (UI)
+- Library: list playlists, create a playlist (writes to Supabase, or a local store without a backend)
 - Playlist detail: cover, song count, "Play all", remove a song, empty state
 
 Auth (Supabase)
 - Email + password sign in / sign up
-- Middleware refreshes the session and protects `/library` and `/playlist/*`
+- Proxy (`src/proxy.ts`) refreshes the session and protects `/library` and `/playlist/*`
 - Graceful no-op when Supabase env vars are missing, so the app runs without a backend
+
+Mobile
+- Bottom nav (Home / Search / Library / Queue) below `lg`, replacing the hidden sidebar
+- Queue opens in a bottom sheet
+- Responsive player bar: compact player with a progress line on phones, full controls from `md` up
 
 Polish
 - Loading skeletons for the home route (reduces layout shift)
 - Empty states for search and playlists
-- Accessibility: ARIA labels on player controls, Space-bar play/pause, focus-visible styles
+- Accessibility: ARIA labels on player controls, tooltips with keyboard hints, Space-bar play/pause, focus-visible styles
 - Performance: `optimizePackageImports` for lucide-react and react-query; lazy-loaded queue panel
+- Motion: shared easing tokens, pointer-gated hover, press feedback, reduced-motion aware
 
 ## Tech stack
 

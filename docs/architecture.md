@@ -1,6 +1,7 @@
 # Architecture
 
 ## App shell
+The shell (sidebar, queue, player bar, mobile nav) lives in the route-group layout `src/app/(app)/layout.tsx`, so it mounts once and persists across navigation — only the page's `<main>` swaps. `/login` and `/signup` sit outside the group with their own centered layout. Route URLs are unchanged by the group.
 ```
 ┌─────────────────────────────────────────────┐
 │ Sidebar │        Main content        │ Queue │
@@ -8,15 +9,21 @@
 │  lists) │   library/playlist)        │ play │
 │         │                            │ +q)  │
 ├─────────┴────────────────────────────┴──────┤
-│               Player bar (fixed)            │
+│               Player bar                    │
+├─────────────────────────────────────────────┤
+│  Mobile nav (Home/Search/Library/Queue)     │
 └─────────────────────────────────────────────┘
 ```
+Below `lg` the sidebar and queue are `hidden`; the mobile nav replaces the sidebar and opens the queue in a bottom sheet (`ui/sheet.tsx`). Both `Sidebar`/`QueuePanel` and `MobileNav`/`sheet` render the same content, so `QueueContent` is exported from `queue-panel.tsx` and reused.
+
+## Playback timing
+The seek bar's `max` and the total-time label come from the **audio element's real duration** (`duration` in the store, set from `loadedmetadata`/`durationchange`), not from the song metadata. Song metadata durations describe the full track; the app plays 30-second iTunes previews, so the two disagree and seeking against the metadata length would jump past the end of the audio.
 
 ## Folders
-- `src/app/` — routes (App Router), layout, globals.css.
+- `src/app/` — root layout, `(app)/` route group (shell layout + pages), auth pages, globals.css.
 - `src/components/ui/` — shadcn primitives.
-- `src/components/layout/` — app shell pieces (sidebar, player bar, queue panel).
-- `src/components/features/` — feature components (song row, album card, ...).
+- `src/components/layout/` — app shell pieces (sidebar, player bar, queue panel, mobile nav).
+- `src/components/features/` — feature components (`PlaylistForm`, ...).
 - `src/stores/` — Zustand stores (player, ui).
 - `src/hooks/` — reusable hooks (usePlayer, useAudio).
 - `src/lib/` — utils, query client, supabase client.
@@ -24,10 +31,13 @@
 - `docs/` — this wiki.
 
 ## Data flow
-- Player state (current song, play/pause, position, speed, queue, liked) lives in Zustand (`stores/player.ts`).
+- Player state (current song, play/pause, position, duration, speed, queue, liked) lives in Zustand (`stores/player.ts`).
 - Server state (songs, playlists, user) via TanStack Query + Supabase.
 - Audio element controlled by a `useAudio` hook that syncs with the store (play/pause/seek/rate).
 - UI state (sidebar collapsed, now-playing open, active view) in Zustand or local component state.
+
+## Without a backend
+`hasSupabase()` gates every query. When `NEXT_PUBLIC_SUPABASE_URL` is unset, queries resolve from the bundled dataset in `lib/data/`, and created playlists go to an in-memory store in `lib/local-playlists.ts`. Each query seeds `initialData` from that dataset so the server and the first client render agree — without it, a query-backed list renders empty on the server and populated on the client, which is a hydration mismatch.
 
 ## Boundaries
 - Supabase is the only backend. Client talks to Supabase directly via RLS; no custom API server for MVP.
