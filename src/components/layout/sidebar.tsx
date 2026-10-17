@@ -1,7 +1,10 @@
 "use client";
 
-import { Home, Library, Plus, Search } from "lucide-react";
+import type { User } from "@supabase/supabase-js";
+import { Home, Library, LogIn, Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 const playlists = [
   { id: "p1", name: "Liked Songs" },
@@ -10,6 +13,22 @@ const playlists = [
 ];
 
 export function Sidebar() {
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+    const { data: subscription } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => {
+      subscription.subscription.unsubscribe();
+    };
+  }, []);
+
   return (
     <aside className="hidden w-56 shrink-0 flex-col gap-2 bg-black p-4 lg:flex">
       <div className="mb-4 flex items-center gap-2 px-2">
@@ -38,6 +57,14 @@ export function Sidebar() {
           <Library className="h-[18px] w-[18px]" /> Your Library
         </Link>
       </nav>
+      {!user && (
+        <Link
+          href="/login"
+          className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-semibold text-red-400 hover:bg-white/5 hover:text-red-300"
+        >
+          <LogIn className="h-[18px] w-[18px]" /> Sign in
+        </Link>
+      )}
       <div className="mt-4 flex-1 overflow-y-auto border-t border-white/5 pt-4">
         <p className="mb-2 px-2 text-xs uppercase tracking-wider text-white/40">Playlists</p>
         {playlists.map((p) => (
