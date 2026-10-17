@@ -43,18 +43,21 @@ export function PlayerBar() {
       <div className="flex items-center gap-1">
         <button
           onClick={prev}
+          aria-label="Previous track"
           className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
         >
           <SkipBack className="h-[18px] w-[18px]" />
         </button>
         <button
           onClick={togglePlay}
+          aria-label={isPlaying ? "Pause" : "Play"}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
         >
           {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
         </button>
         <button
           onClick={next}
+          aria-label="Next track"
           className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
         >
           <SkipForward className="h-[18px] w-[18px]" />
@@ -75,6 +78,7 @@ export function PlayerBar() {
         <span className="w-9 text-xs tabular-nums text-white/50">{fmt(song.duration)}</span>
         <button
           onClick={() => toggleLike(song.id)}
+          aria-label={isLiked ? "Unlike" : "Like"}
           className={cn(
             "btn-ghost flex h-8 w-8 items-center justify-center rounded-full",
             isLiked && "text-red-500",
@@ -98,7 +102,10 @@ export function PlayerBar() {
           ))}
         </div>
       </div>
-      <button className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full">
+      <button
+        aria-label="Full screen"
+        className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+      >
         <Maximize2 className="h-[18px] w-[18px]" />
       </button>
     </div>
