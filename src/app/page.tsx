@@ -1,8 +1,16 @@
 "use client";
 
 import { Play } from "lucide-react";
+import dynamic from "next/dynamic";
 import { PlayerBar } from "@/components/layout/player-bar";
-import { QueuePanel } from "@/components/layout/queue-panel";
+
+const QueuePanel = dynamic(
+  () => import("@/components/layout/queue-panel").then((m) => m.QueuePanel),
+  {
+    ssr: false,
+  },
+);
+
 import { Sidebar } from "@/components/layout/sidebar";
 import { useAlbums, useSongs } from "@/lib/queries";
 import { usePlayer } from "@/stores/player";
