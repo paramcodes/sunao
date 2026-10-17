@@ -20,7 +20,7 @@ flowchart LR
 | Phase | Status | Evidence |
 |---|---|---|
 | 0 Scaffold | ✅ done | ![home](artifacts/verify-home/home.png) |
-| 1 Audio playback core | ⬜ | — |
+| 1 Audio playback core | ✅ done | ![home](artifacts/verify-phase1/home.png) |
 | 2 Data layer (Supabase) | ⬜ | — |
 | 3 Library & playlists | ⬜ | — |
 | 4 Auth | ⬜ | — |

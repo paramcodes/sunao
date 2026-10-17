@@ -1,23 +1,50 @@
 "use client";
 
 import { Heart, Maximize2, Pause, Play, SkipBack, SkipForward } from "lucide-react";
+import { SONGS } from "@/lib/data/songs";
+import { cn } from "@/lib/utils";
 import { usePlayer } from "@/stores/player";
 
 export function PlayerBar() {
-  const { isPlaying, togglePlay, speed, setSpeed } = usePlayer();
+  const currentSongId = usePlayer((s) => s.currentSongId);
+  const isPlaying = usePlayer((s) => s.isPlaying);
+  const position = usePlayer((s) => s.position);
+  const speed = usePlayer((s) => s.speed);
+  const liked = usePlayer((s) => s.liked);
+  const play = usePlayer((s) => s.play);
+  const togglePlay = usePlayer((s) => s.togglePlay);
+  const seek = usePlayer((s) => s.seek);
+  const setSpeed = usePlayer((s) => s.setSpeed);
+  const next = usePlayer((s) => s.next);
+  const prev = usePlayer((s) => s.prev);
+  const toggleLike = usePlayer((s) => s.toggleLike);
+
+  const song = SONGS.find((s) => s.id === currentSongId) ?? SONGS[0];
+  const isLiked = liked.has(song.id);
+
+  const fmt = (sec: number) => {
+    const s = Math.max(0, Math.floor(sec));
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+  };
 
   return (
     <div className="flex items-center gap-3 border-t border-white/5 bg-[#181818] px-4 py-4">
-      <button className="btn-ghost flex items-center gap-3 rounded-lg px-2 py-1.5">
-        <div className="h-14 w-14 shrink-0 rounded-lg bg-red-900" />
+      <button
+        onClick={() => play(song)}
+        className="btn-ghost flex items-center gap-3 rounded-lg px-2 py-1.5"
+      >
+        <div className="h-14 w-14 shrink-0 rounded-lg" style={{ background: song.color }} />
         <div className="w-44 text-left">
-          <p className="truncate text-sm font-semibold">Crimson Tide</p>
-          <p className="truncate text-xs text-white/60">The Hollows</p>
+          <p className="truncate text-sm font-semibold">{song.title}</p>
+          <p className="truncate text-xs text-white/60">{song.artist}</p>
         </div>
       </button>
 
       <div className="flex items-center gap-1">
-        <button className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full">
+        <button
+          onClick={prev}
+          className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+        >
           <SkipBack className="h-[18px] w-[18px]" />
         </button>
         <button
@@ -26,23 +53,34 @@ export function PlayerBar() {
         >
           {isPlaying ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
         </button>
-        <button className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full">
+        <button
+          onClick={next}
+          className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+        >
           <SkipForward className="h-[18px] w-[18px]" />
         </button>
       </div>
 
       <div className="flex max-w-[620px] flex-1 items-center gap-3">
-        <span className="w-9 text-right text-xs tabular-nums text-white/70">0:42</span>
+        <span className="w-9 text-right text-xs tabular-nums text-white/70">{fmt(position)}</span>
         <input
           type="range"
           min={0}
-          max={100}
-          defaultValue={20}
+          max={song.duration}
+          step={0.1}
+          value={position}
+          onChange={(e) => seek(Number(e.target.value))}
           className="h-1 flex-1 cursor-pointer appearance-none rounded bg-white/20 accent-white"
         />
-        <span className="w-9 text-xs tabular-nums text-white/50">3:34</span>
-        <button className="btn-ghost flex h-8 w-8 items-center justify-center rounded-full">
-          <Heart className="h-[18px] w-[18px]" />
+        <span className="w-9 text-xs tabular-nums text-white/50">{fmt(song.duration)}</span>
+        <button
+          onClick={() => toggleLike(song.id)}
+          className={cn(
+            "btn-ghost flex h-8 w-8 items-center justify-center rounded-full",
+            isLiked && "text-red-500",
+          )}
+        >
+          <Heart className={cn("h-[18px] w-[18px]", isLiked && "fill-current")} />
         </button>
       </div>
 
