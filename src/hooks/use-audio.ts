@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { SONGS } from "@/lib/data/songs";
+import { fetchPreviewUrl } from "@/lib/itunes";
 import { usePlayer } from "@/stores/player";
 
 export function useAudio() {
@@ -50,11 +51,22 @@ export function useAudio() {
       audio.src = "";
       return;
     }
-    audio.src = "/audio/sample.mp3";
-    audio.load();
-    if (usePlayer.getState().isPlaying) {
-      void audio.play();
-    }
+    const requestId = currentSongId;
+    let cancelled = false;
+    void (async () => {
+      const previewUrl = await fetchPreviewUrl(song.title, song.artist);
+      if (cancelled) return;
+      if (usePlayer.getState().currentSongId !== requestId) return;
+      audio.pause();
+      audio.src = previewUrl ?? "/audio/sample.mp3";
+      audio.load();
+      if (usePlayer.getState().isPlaying) {
+        void audio.play().catch(() => {});
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [currentSongId]);
 
   useEffect(() => {
