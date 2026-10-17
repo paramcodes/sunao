@@ -8,6 +8,9 @@ export const SongSchema = z.object({
   duration: z.number(),
   color: z.string(),
   artwork: z.string().optional(),
+  previewUrl: z.string().optional(),
+  artistId: z.number().optional(),
+  albumId: z.number().optional(),
 });
 
 export type Song = z.infer<typeof SongSchema>;
@@ -20,9 +23,19 @@ export const AlbumSchema = z.object({
   color: z.string(),
   artwork: z.string().optional(),
   songs: z.array(z.number()),
+  artistId: z.number().optional(),
 });
 
 export type Album = z.infer<typeof AlbumSchema>;
+
+export const ArtistSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  genre: z.string().optional(),
+  artwork: z.string().optional(),
+});
+
+export type Artist = z.infer<typeof ArtistSchema>;
 
 export const PlaylistSchema = z.object({
   id: z.string(),

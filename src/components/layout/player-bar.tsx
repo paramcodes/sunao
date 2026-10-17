@@ -348,6 +348,7 @@ function FullScreenButton() {
 
 export function PlayerBar() {
   const currentSongId = usePlayer((s) => s.currentSongId);
+  const customSongs = usePlayer((s) => s.customSongs);
   const isPlaying = usePlayer((s) => s.isPlaying);
   const isBuffering = usePlayer((s) => s.isBuffering);
   const showBuffering = useDelayedFlag(isBuffering, 200);
@@ -357,7 +358,10 @@ export function PlayerBar() {
   const prev = usePlayer((s) => s.prev);
   const { data: songs = [] } = useSongs();
 
-  const song = songs.find((s) => s.id === currentSongId) ?? null;
+  const song =
+    (currentSongId !== null ? customSongs[currentSongId] : null) ??
+    songs.find((s) => s.id === currentSongId) ??
+    null;
   const idle = song === null;
 
   return (

@@ -1,1 +1,1 @@
-export type { Album, Playlist, Song } from "@/lib/schemas";
+export type { Album, Artist, Playlist, Song } from "@/lib/schemas";
