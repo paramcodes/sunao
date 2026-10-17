@@ -24,8 +24,8 @@ flowchart LR
 | 2 Data layer (Supabase) | ✅ done | ![home](artifacts/verify-phase2/home.png) |
 | 3 Library & playlists | ✅ done | — |
 | 4 Auth | ✅ done | ![login](artifacts/verify-phase4/login.png) |
-| 5 Polish & perf | ⬜ | — |
-| 6 Deploy | ⬜ | — |
+| 5 Polish & perf | ✅ done | — |
+| 6 Deploy | ✅ done | https://sunao-omega.vercel.app |
 
 ## Dev
 ```bash
