@@ -5,7 +5,9 @@ import type { Song } from "@/types";
 type PlayerState = {
   currentSongId: number | null;
   isPlaying: boolean;
+  isBuffering: boolean;
   position: number;
+  duration: number | null;
   speed: number;
   queue: number[];
   liked: Set<number>;
@@ -13,6 +15,9 @@ type PlayerState = {
   togglePlay: () => void;
   seek: (position: number) => void;
   setSpeed: (speed: number) => void;
+  setQueue: (ids: number[]) => void;
+  setBuffering: (buffering: boolean) => void;
+  setDuration: (duration: number | null) => void;
   next: () => void;
   prev: () => void;
   toggleLike: (id: number) => void;
@@ -28,7 +33,9 @@ function resolveSong(id: number | null): Song | null {
 export const usePlayer = create<PlayerState>((set, get) => ({
   currentSongId: 1,
   isPlaying: false,
+  isBuffering: false,
   position: 0,
+  duration: null,
   speed: 1,
   queue: SONGS.map((song) => song.id),
   liked: new Set<number>([1, 3, 5]),
@@ -39,6 +46,9 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   togglePlay: () => set((state) => ({ isPlaying: !state.isPlaying })),
   seek: (position) => set({ position }),
   setSpeed: (speed) => set({ speed }),
+  setQueue: (ids) => set({ queue: ids }),
+  setBuffering: (buffering) => set({ isBuffering: buffering }),
+  setDuration: (duration) => set({ duration }),
   next: () => {
     const { currentSongId, queue } = get();
     if (currentSongId === null) return;

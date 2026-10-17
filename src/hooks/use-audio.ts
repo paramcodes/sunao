@@ -21,6 +21,15 @@ export function useAudio() {
       usePlayer.getState().next();
     };
 
+    const handleWaiting = () => usePlayer.getState().setBuffering(true);
+    const handleReady = () => usePlayer.getState().setBuffering(false);
+    const handleDuration = () => {
+      const current = audioRef.current;
+      if (!current) return;
+      const value = current.duration;
+      usePlayer.getState().setDuration(Number.isFinite(value) ? value : null);
+    };
+
     const handleTimeUpdate = () => {
       const current = audioRef.current;
       if (!current) return;
@@ -32,10 +41,24 @@ export function useAudio() {
 
     audio.addEventListener("ended", handleEnded);
     audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("waiting", handleWaiting);
+    audio.addEventListener("playing", handleReady);
+    audio.addEventListener("canplay", handleReady);
+    audio.addEventListener("loadeddata", handleReady);
+    audio.addEventListener("error", handleReady);
+    audio.addEventListener("loadedmetadata", handleDuration);
+    audio.addEventListener("durationchange", handleDuration);
 
     return () => {
       audio.removeEventListener("ended", handleEnded);
       audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("waiting", handleWaiting);
+      audio.removeEventListener("playing", handleReady);
+      audio.removeEventListener("canplay", handleReady);
+      audio.removeEventListener("loadeddata", handleReady);
+      audio.removeEventListener("error", handleReady);
+      audio.removeEventListener("loadedmetadata", handleDuration);
+      audio.removeEventListener("durationchange", handleDuration);
       audio.pause();
       audio.src = "";
       audioRef.current = null;
@@ -49,10 +72,14 @@ export function useAudio() {
       currentSongId === null ? null : (SONGS.find((item) => item.id === currentSongId) ?? null);
     if (!song) {
       audio.src = "";
+      usePlayer.getState().setBuffering(false);
+      usePlayer.getState().setDuration(null);
       return;
     }
     const requestId = currentSongId;
     let cancelled = false;
+    usePlayer.getState().setBuffering(true);
+    usePlayer.getState().setDuration(null);
     void (async () => {
       const previewUrl = await fetchPreviewUrl(song.title, song.artist);
       if (cancelled) return;
@@ -73,7 +100,7 @@ export function useAudio() {
     const audio = audioRef.current;
     if (!audio) return;
     if (isPlaying) {
-      void audio.play();
+      void audio.play().catch(() => {});
     } else {
       audio.pause();
     }
@@ -88,8 +115,10 @@ export function useAudio() {
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (Math.abs(audio.currentTime - position) > 0.01) {
-      audio.currentTime = position;
+    const limit = Number.isFinite(audio.duration) ? audio.duration : position;
+    const target = Math.min(position, limit);
+    if (Math.abs(audio.currentTime - target) > 0.01) {
+      audio.currentTime = target;
     }
   }, [position]);
 
