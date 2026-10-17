@@ -29,6 +29,7 @@ Playback
 - Like / unlike the current track
 - Now-playing card and queue panel; click any queue item to play
 - Auto-advance to the next track when a song ends
+- Audio: 30-second previews fetched from the iTunes Search API (no API key); cached per title+artist, falls back to a bundled sample tone on failure
 
 Browse
 - Home: album grid + song list (click a song to play)
