@@ -4,12 +4,20 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Strong custom easings. Built-in CSS easings are too weak to feel intentional;
+   these are the curves recommended by the design-engineering skill. */
+@theme {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-heading: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -122,10 +130,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
+    @apply bg-background font-sans text-foreground;
   }
 }
 
@@ -153,15 +158,18 @@
     color: rgba(255, 255, 255, 0.8);
     border-radius: 0.5rem;
     transition:
-      background 0.15s,
-      border-color 0.15s,
-      color 0.15s,
-      transform 0.15s;
+      background 0.15s var(--ease-out),
+      border-color 0.15s var(--ease-out),
+      color 0.15s var(--ease-out),
+      transform 0.15s var(--ease-out);
   }
-  .btn-ghost:hover {
-    background: oklch(1 0 0 / 0.08);
-    border-color: oklch(1 0 0 / 0.25);
-    color: #fff;
+  /* Hover styles are pointer-only: on touch, :hover sticks after a tap. */
+  @media (hover: hover) and (pointer: fine) {
+    .btn-ghost:hover {
+      background: oklch(1 0 0 / 0.08);
+      border-color: oklch(1 0 0 / 0.25);
+      color: #fff;
+    }
   }
   .btn-ghost:active {
     transform: scale(0.96);
@@ -180,7 +188,33 @@
     *::before,
     *::after {
       animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-property: opacity, color, background-color, border-color !important;
+      transition-duration: 150ms !important;
     }
   }
+}
+
+/* Thin, rounded scrollbars for scrollable panes (main content, queue, sidebar).
+   Kept off the compositor-heavy default look, matching the Spotify feel. */
+.scroll-pane {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(1 0 0 / 0.25) transparent;
+}
+.scroll-pane::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+.scroll-pane::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-pane::-webkit-scrollbar-thumb {
+  background-color: oklch(1 0 0 / 0.2);
+  background-clip: content-box;
+  border: 3px solid transparent;
+  border-radius: 9999px;
+}
+.scroll-pane::-webkit-scrollbar-thumb:hover {
+  background-color: oklch(1 0 0 / 0.35);
 }
