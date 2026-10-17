@@ -11,16 +11,54 @@ export function useAudio() {
   const isPlaying = usePlayer((state) => state.isPlaying);
   const speed = usePlayer((state) => state.speed);
   const position = usePlayer((state) => state.position);
+  const volume = usePlayer((state) => state.volume);
+  const isMuted = usePlayer((state) => state.isMuted);
   const { data: songs = [] } = useSongs();
   const lastLoadKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (typeof Audio === "undefined") return;
     const audio = new Audio();
+    audio.volume = Math.min(1, Math.max(0, usePlayer.getState().volume));
+    audio.muted = usePlayer.getState().isMuted;
     audioRef.current = audio;
 
     const handleEnded = () => {
-      usePlayer.getState().next();
+      const { repeatMode, currentSongId, queue } = usePlayer.getState();
+      if (repeatMode === "one") {
+        if (audioRef.current) {
+          audioRef.current.currentTime = 0;
+          void audioRef.current.play().catch(() => {});
+        }
+        usePlayer.getState().seek(0);
+        return;
+      }
+
+      if (currentSongId === null || queue.length === 0) return;
+      const index = queue.indexOf(currentSongId);
+      if (index === -1) return;
+
+      const nextIndex = index + 1;
+      if (nextIndex < queue.length) {
+        usePlayer.getState().play(queue[nextIndex]);
+      } else if (repeatMode === "all") {
+        const nextId = queue[0];
+        if (nextId === currentSongId) {
+          if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+            void audioRef.current.play().catch(() => {});
+          }
+          usePlayer.getState().seek(0);
+        } else {
+          usePlayer.getState().play(nextId);
+        }
+      } else {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        usePlayer.setState({ isPlaying: false, position: 0 });
+      }
     };
 
     const handleWaiting = () => usePlayer.getState().setBuffering(true);
@@ -111,6 +149,13 @@ export function useAudio() {
       audio.pause();
     }
   }, [isPlaying]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.volume = Math.min(1, Math.max(0, volume));
+    audio.muted = isMuted;
+  }, [volume, isMuted]);
 
   useEffect(() => {
     const audio = audioRef.current;
