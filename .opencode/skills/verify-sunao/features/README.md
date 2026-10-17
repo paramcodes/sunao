@@ -23,8 +23,9 @@ Maintained source for verifying user-facing behavior of sunao.
 - Record the feature ID with every artifact.
 - Evidence goes to `artifacts/verify-<feature-id>/`; keep it, do not commit run notes.
 
-## Known product gap (reported 2026-10-17)
+## Known product gaps (reported 2026-10-17)
 - Without Supabase, creating a playlist succeeds and it appears in `/library` and the sidebar, but opening it renders "404: This page could not be found". Cause: `/playlist/[id]` resolves the id server-side from the static `PLAYLISTS` and calls `notFound()`, while the created playlist exists only in the client store. See `library-playlists.md` for how the recipe handles it.
+- Submitting `/login` or `/signup` without Supabase env vars shows the user nothing: the client-construction throw goes unhandled and the form's error state never renders. See `auth.md`.
 
 ## Features
 - [Home renders](./home-renders.md) — greeting, album grid, song list, app shell.
