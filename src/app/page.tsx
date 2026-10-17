@@ -4,11 +4,13 @@ import { Play } from "lucide-react";
 import { PlayerBar } from "@/components/layout/player-bar";
 import { QueuePanel } from "@/components/layout/queue-panel";
 import { Sidebar } from "@/components/layout/sidebar";
-import { ALBUMS, SONGS } from "@/lib/data/songs";
+import { useAlbums, useSongs } from "@/lib/queries";
 import { usePlayer } from "@/stores/player";
 
 export default function Home() {
   const play = usePlayer((s) => s.play);
+  const { data: songs = [] } = useSongs();
+  const { data: albums = [] } = useAlbums();
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
@@ -17,7 +19,7 @@ export default function Home() {
         <main className="flex-1 overflow-y-auto p-6">
           <h1 className="text-2xl font-bold">Good evening</h1>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-            {ALBUMS.map((a) => (
+            {albums.map((a) => (
               <div key={a.id} className="rounded-3xl bg-[#181818] p-4 hover:bg-[#282828]">
                 <div
                   className="mb-3 aspect-square w-full rounded-lg"
@@ -30,7 +32,7 @@ export default function Home() {
           </div>
           <h2 className="mt-8 text-xl font-bold">Songs</h2>
           <div className="mt-3 space-y-1">
-            {SONGS.map((s, i) => (
+            {songs.map((s, i) => (
               <button
                 key={s.id}
                 onClick={() => play(s)}

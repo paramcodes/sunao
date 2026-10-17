@@ -20,3 +20,4 @@ Maintained source for verifying user-facing behavior of sunao.
 ## Features
 - [Home renders](./home-renders.md) covers the home page greeting and app shell.
 - [Player bar](./player-bar.md) covers playback controls.
+- [Data layer](./data-layer.md) covers songs/albums/playlists loading.
