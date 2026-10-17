@@ -43,3 +43,6 @@ next-env.d.ts
 # Playwright
 test-results/
 playwright-report/
+
+# skills CLI install dir (see skills-lock.json)
+.agents/
