@@ -22,6 +22,7 @@ Source of truth: `docs/prototype.html` (throwaway UI reference, red theme).
 - Tooltips: Base UI tooltip on player controls; content shows the action and its shortcut (`<Kbd>`). Base UI opens the next tooltip instantly (`data-instant`) after the first.
 - Buffering: play button swaps to a spinner (`Loader2`) while audio is loading — a fast spinner makes loading feel faster.
 - Mobile: below `lg`, a bottom nav replaces the sidebar and the queue opens in a bottom sheet (`ui/sheet.tsx`, side `bottom`, slide + backdrop fade). The player bar keeps art, transport, and like; the seek bar and speed control appear from `md` up, and a 2px progress line sits on the player's top edge on mobile.
+- Collapsible panels: a panel that collapses narrows to a rail rather than unmounting, so its toggle never becomes unreachable. The rail button is a `PanelRightClose`/`PanelRightOpen` icon pair, the content fades out as the panel narrows over `--duration-drawer`, and the collapsed content goes `inert` instead of being removed from the DOM.
 - Toasts: `sonner`, themed to the `#1f1f1f` surface and offset above the player bar (higher on mobile to clear the nav). Removing a liked song offers an **Undo** action; saving just confirms. The Undo is the part that earns the toast — the heart alone already confirms a save.
 - Reduced motion: keep opacity/color feedback, drop movement (`transition-property` scoped, durations shortened).
 - Pulse on now-playing album art while playing (subtle).
