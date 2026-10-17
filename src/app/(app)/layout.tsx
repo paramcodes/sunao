@@ -2,6 +2,8 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { PlayerBar } from "@/components/layout/player-bar";
 import { QueuePanel } from "@/components/layout/queue-panel";
 import { Sidebar } from "@/components/layout/sidebar";
+import { MobileSheetPlayer } from "@/components/player/mobile-sheet-player";
+import { NowPlayingPanel } from "@/components/player/now-playing-panel";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -15,6 +17,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       <PlayerBar />
       <MobileNav />
+      <NowPlayingPanel />
+      <MobileSheetPlayer />
     </div>
   );
 }

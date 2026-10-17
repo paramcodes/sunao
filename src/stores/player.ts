@@ -75,6 +75,7 @@ export type PlayerState = {
   isShuffle: boolean;
   repeatMode: RepeatMode;
   customSongs: Record<number, Song>;
+  isNowPlayingOpen: boolean;
   play: (song: Song | number) => void;
   registerSongs: (songs: Song[]) => void;
   togglePlay: () => void;
@@ -88,6 +89,8 @@ export type PlayerState = {
   toggleShuffle: () => void;
   setRepeatMode: (mode: RepeatMode) => void;
   toggleRepeat: () => void;
+  setNowPlayingOpen: (open: boolean) => void;
+  toggleNowPlaying: () => void;
   next: () => void;
   prev: () => void;
 };
@@ -108,6 +111,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   isShuffle: initialPrefs.isShuffle,
   repeatMode: initialPrefs.repeatMode,
   customSongs: {},
+  isNowPlayingOpen: false,
   registerSongs: (songs) => {
     set((state) => {
       const next = { ...state.customSongs };
@@ -202,6 +206,8 @@ export const usePlayer = create<PlayerState>((set, get) => ({
     set({ repeatMode: next });
     writeStoredPreferences({ repeatMode: next });
   },
+  setNowPlayingOpen: (open) => set({ isNowPlayingOpen: open }),
+  toggleNowPlaying: () => set((state) => ({ isNowPlayingOpen: !state.isNowPlayingOpen })),
   next: () => {
     const { currentSongId, queue } = get();
     if (currentSongId === null || queue.length === 0) return;

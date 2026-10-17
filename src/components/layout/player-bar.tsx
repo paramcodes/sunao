@@ -18,7 +18,7 @@ import {
   VolumeX,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Kbd } from "@/components/ui/kbd";
 import { Slider } from "@/components/ui/slider";
@@ -28,7 +28,7 @@ import { useIsLiked, useSetLiked, useSongs } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/stores/player";
 
-const formatTime = (sec: number) => {
+export const formatTime = (sec: number) => {
   const s = Math.max(0, Math.floor(sec));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
@@ -61,7 +61,7 @@ function MobileSeek() {
   );
 }
 
-function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
+export function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
   const position = usePlayer((s) => s.position);
   const duration = usePlayer((s) => s.duration);
   const seek = usePlayer((s) => s.seek);
@@ -91,7 +91,7 @@ function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
   );
 }
 
-function LikeButton({ songId }: { songId: number }) {
+export function LikeButton({ songId }: { songId: number }) {
   const { data: isLiked = false } = useIsLiked(songId);
   const setLiked = useSetLiked();
   const [pop, setPop] = useState(false);
@@ -253,7 +253,7 @@ function VolumeControl() {
   );
 }
 
-function SpeedControl() {
+export function SpeedControl() {
   const speed = usePlayer((s) => s.speed);
   const setSpeed = usePlayer((s) => s.setSpeed);
   const [open, setOpen] = useState(false);
@@ -303,45 +303,30 @@ function SpeedControl() {
   );
 }
 
-function FullScreenButton() {
-  const [isFull, setIsFull] = useState(false);
-
-  useEffect(() => {
-    const onChange = () => setIsFull(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onChange);
-    onChange();
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
-
-  const toggle = () => {
-    if (document.fullscreenElement) {
-      void document.exitFullscreen().catch(() => {});
-      return;
-    }
-    void document.documentElement.requestFullscreen().catch(() => {
-      toast.error("Full screen isn't available in this browser");
-    });
-  };
+function NowPlayingButton() {
+  const isNowPlayingOpen = usePlayer((s) => s.isNowPlayingOpen);
+  const toggleNowPlaying = usePlayer((s) => s.toggleNowPlaying);
 
   return (
     <Tooltip>
       <TooltipTrigger
         render={
           <button
-            onClick={toggle}
-            aria-label={isFull ? "Exit full screen" : "Full screen"}
-            aria-pressed={isFull}
+            id="now-playing-trigger"
+            onClick={toggleNowPlaying}
+            aria-label={isNowPlayingOpen ? "Exit now playing" : "Open now playing"}
+            aria-expanded={isNowPlayingOpen}
             className="btn-ghost hidden h-9 w-9 items-center justify-center rounded-full md:flex"
           />
         }
       >
-        {isFull ? (
+        {isNowPlayingOpen ? (
           <Minimize2 className="h-[18px] w-[18px]" />
         ) : (
           <Maximize2 className="h-[18px] w-[18px]" />
         )}
       </TooltipTrigger>
-      <TooltipContent>{isFull ? "Exit full screen" : "Full screen"}</TooltipContent>
+      <TooltipContent>{isNowPlayingOpen ? "Collapse now playing" : "Now playing"}</TooltipContent>
     </Tooltip>
   );
 }
@@ -356,7 +341,10 @@ export function PlayerBar() {
   const togglePlay = usePlayer((s) => s.togglePlay);
   const next = usePlayer((s) => s.next);
   const prev = usePlayer((s) => s.prev);
+  const setNowPlayingOpen = usePlayer((s) => s.setNowPlayingOpen);
   const { data: songs = [] } = useSongs();
+
+  const touchStartY = useRef<number | null>(null);
 
   const song =
     (currentSongId !== null ? customSongs[currentSongId] : null) ??
@@ -364,16 +352,38 @@ export function PlayerBar() {
     null;
   const idle = song === null;
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current !== null) {
+      const diff = touchStartY.current - e.changedTouches[0].clientY;
+      if (diff > 40) {
+        setNowPlayingOpen(true);
+      }
+      touchStartY.current = null;
+    }
+  };
+
   return (
     <div
       data-slot="player-bar"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
       className="relative flex items-center gap-2 border-t border-white/5 bg-[var(--bg-card)] px-3 py-3 sm:gap-3 sm:px-4 sm:py-4"
     >
       <MobileSeek />
 
       <button
         type="button"
-        onClick={() => song && play(song)}
+        onClick={() => {
+          if (typeof window !== "undefined" && window.innerWidth < 768) {
+            setNowPlayingOpen(true);
+          } else if (song) {
+            play(song);
+          }
+        }}
         disabled={idle}
         className="btn-ghost flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 disabled:cursor-default sm:flex-none"
       >
@@ -471,7 +481,7 @@ export function PlayerBar() {
 
       <VolumeControl />
       <SpeedControl />
-      <FullScreenButton />
+      <NowPlayingButton />
     </div>
   );
 }
