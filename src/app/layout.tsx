@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PlayerProvider } from "@/components/player-provider";
 import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,7 +31,10 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <TooltipProvider>
-            <PlayerProvider>{children}</PlayerProvider>
+            <PlayerProvider>
+              <KeyboardShortcuts />
+              {children}
+            </PlayerProvider>
           </TooltipProvider>
         </Providers>
       </body>
