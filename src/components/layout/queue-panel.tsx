@@ -14,10 +14,17 @@ const PANEL_ID = "queue-panel-content";
 export function QueueContent() {
   const queue = usePlayer((s) => s.queue);
   const currentSongId = usePlayer((s) => s.currentSongId);
+  const customSongs = usePlayer((s) => s.customSongs);
   const play = usePlayer((s) => s.play);
   const { data: songs = [] } = useSongs();
 
-  const songById = useMemo(() => new Map(songs.map((song) => [song.id, song])), [songs]);
+  const songById = useMemo(() => {
+    const map = new Map(songs.map((song) => [song.id, song]));
+    for (const [idStr, s] of Object.entries(customSongs)) {
+      map.set(Number(idStr), s);
+    }
+    return map;
+  }, [songs, customSongs]);
   const current = songById.get(currentSongId ?? -1) ?? null;
 
   const parentRef = useRef<HTMLDivElement>(null);

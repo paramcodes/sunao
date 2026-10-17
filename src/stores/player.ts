@@ -9,7 +9,9 @@ type PlayerState = {
   duration: number | null;
   speed: number;
   queue: number[];
+  customSongs: Record<number, Song>;
   play: (song: Song | number) => void;
+  registerSongs: (songs: Song[]) => void;
   togglePlay: () => void;
   seek: (position: number) => void;
   setSpeed: (speed: number) => void;
@@ -28,9 +30,27 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   duration: null,
   speed: 1,
   queue: [],
+  customSongs: {},
+  registerSongs: (songs) => {
+    set((state) => {
+      const next = { ...state.customSongs };
+      for (const s of songs) {
+        next[s.id] = s;
+      }
+      return { customSongs: next };
+    });
+  },
   play: (song) => {
-    const id = typeof song === "number" ? song : song.id;
-    set({ currentSongId: id, position: 0, isPlaying: true });
+    if (typeof song === "number") {
+      set({ currentSongId: song, position: 0, isPlaying: true });
+    } else {
+      set((state) => ({
+        currentSongId: song.id,
+        position: 0,
+        isPlaying: true,
+        customSongs: { ...state.customSongs, [song.id]: song },
+      }));
+    }
   },
   togglePlay: () => {
     const { currentSongId, isPlaying } = get();
