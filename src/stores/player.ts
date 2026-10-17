@@ -9,6 +9,7 @@ type PlayerState = {
   duration: number | null;
   speed: number;
   queue: number[];
+  isNowPlayingOpen: boolean;
   play: (song: Song | number) => void;
   togglePlay: () => void;
   seek: (position: number) => void;
@@ -16,6 +17,8 @@ type PlayerState = {
   setQueue: (ids: number[]) => void;
   setBuffering: (buffering: boolean) => void;
   setDuration: (duration: number | null) => void;
+  setNowPlayingOpen: (open: boolean) => void;
+  toggleNowPlaying: () => void;
   next: () => void;
   prev: () => void;
 };
@@ -28,6 +31,7 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   duration: null,
   speed: 1,
   queue: [],
+  isNowPlayingOpen: false,
   play: (song) => {
     const id = typeof song === "number" ? song : song.id;
     set({ currentSongId: id, position: 0, isPlaying: true });
@@ -42,6 +46,8 @@ export const usePlayer = create<PlayerState>((set, get) => ({
   setQueue: (ids) => set({ queue: ids }),
   setBuffering: (buffering) => set({ isBuffering: buffering }),
   setDuration: (duration) => set({ duration }),
+  setNowPlayingOpen: (open) => set({ isNowPlayingOpen: open }),
+  toggleNowPlaying: () => set((state) => ({ isNowPlayingOpen: !state.isNowPlayingOpen })),
   next: () => {
     const { currentSongId, queue } = get();
     if (currentSongId === null) return;
