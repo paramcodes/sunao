@@ -7,13 +7,25 @@ See [docs/README.md](docs/README.md) for the wiki (stack, architecture, design s
 
 ## Feature map
 <!-- Updated after each phase via /maintain-verification-skill -->
-- [ ] Phase 0: Scaffold
-- [ ] Phase 1: Audio playback core
-- [ ] Phase 2: Data layer (Supabase)
-- [ ] Phase 3: Library & playlists
-- [ ] Phase 4: Auth
-- [ ] Phase 5: Polish & perf
-- [ ] Phase 6: Deploy
+
+```mermaid
+flowchart LR
+  A[Home] --> B[App shell]
+  B --> C[Sidebar]
+  B --> D[Main content]
+  B --> E[Queue panel]
+  B --> F[Player bar]
+```
+
+| Phase | Status | Evidence |
+|---|---|---|
+| 0 Scaffold | ✅ done | ![home](artifacts/verify-home/home.png) |
+| 1 Audio playback core | ⬜ | — |
+| 2 Data layer (Supabase) | ⬜ | — |
+| 3 Library & playlists | ⬜ | — |
+| 4 Auth | ⬜ | — |
+| 5 Polish & perf | ⬜ | — |
+| 6 Deploy | ⬜ | — |
 
 ## Dev
 ```bash
