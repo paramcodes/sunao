@@ -8,8 +8,14 @@ import {
   Music,
   Pause,
   Play,
+  Repeat,
+  Repeat1,
+  Shuffle,
   SkipBack,
   SkipForward,
+  Volume1,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -133,6 +139,117 @@ function LikeButton({ songId }: { songId: number }) {
       </TooltipTrigger>
       <TooltipContent>{isLiked ? "Remove from Liked Songs" : "Save to Liked Songs"}</TooltipContent>
     </Tooltip>
+  );
+}
+
+function ShuffleButton() {
+  const isShuffle = usePlayer((s) => s.isShuffle);
+  const toggleShuffle = usePlayer((s) => s.toggleShuffle);
+
+  const label = isShuffle ? "Disable shuffle" : "Enable shuffle";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={toggleShuffle}
+            aria-label={label}
+            aria-pressed={isShuffle}
+            className={cn(
+              "btn-ghost relative flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+              isShuffle ? "text-red-500" : "text-white/70",
+            )}
+          />
+        }
+      >
+        <Shuffle className="h-[18px] w-[18px]" />
+        {isShuffle && (
+          <span className="absolute bottom-1 size-1 rounded-full bg-red-500" aria-hidden="true" />
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{isShuffle ? "Shuffle on" : "Shuffle off"}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function RepeatButton() {
+  const repeatMode = usePlayer((s) => s.repeatMode);
+  const toggleRepeat = usePlayer((s) => s.toggleRepeat);
+
+  const Icon = repeatMode === "one" ? Repeat1 : Repeat;
+  const isActive = repeatMode !== "off";
+  const label =
+    repeatMode === "off" ? "Repeat: off" : repeatMode === "all" ? "Repeat: all" : "Repeat: one";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={toggleRepeat}
+            aria-label={label}
+            aria-pressed={isActive}
+            className={cn(
+              "btn-ghost relative flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+              isActive ? "text-red-500" : "text-white/70",
+            )}
+          />
+        }
+      >
+        <Icon className="h-[18px] w-[18px]" />
+        {isActive && (
+          <span className="absolute bottom-1 size-1 rounded-full bg-red-500" aria-hidden="true" />
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function VolumeControl() {
+  const volume = usePlayer((s) => s.volume);
+  const isMuted = usePlayer((s) => s.isMuted);
+  const setVolume = usePlayer((s) => s.setVolume);
+  const toggleMute = usePlayer((s) => s.toggleMute);
+
+  const displayVolume = isMuted ? 0 : volume;
+  const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const label = isMuted || volume === 0 ? "Unmute" : "Mute";
+
+  return (
+    <div className="hidden items-center gap-1.5 md:flex">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={label}
+              className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+            />
+          }
+        >
+          <VolumeIcon className="h-[18px] w-[18px]" />
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+      <div className="w-20 lg:w-24">
+        <Slider
+          min={0}
+          max={1}
+          step={0.01}
+          value={[displayVolume]}
+          getAriaLabel={() => "Volume"}
+          onValueChange={(val) => {
+            const next = Array.isArray(val) ? val[0] : val;
+            setVolume(next);
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -281,6 +398,7 @@ export function PlayerBar() {
       </button>
 
       <div className="flex items-center gap-1">
+        <ShuffleButton />
         <Tooltip>
           <TooltipTrigger
             render={
@@ -336,6 +454,7 @@ export function PlayerBar() {
           </TooltipTrigger>
           <TooltipContent>Next</TooltipContent>
         </Tooltip>
+        <RepeatButton />
       </div>
 
       <div className="hidden min-w-0 max-w-[620px] flex-1 items-center gap-3 md:flex">
@@ -346,6 +465,7 @@ export function PlayerBar() {
         {song && <LikeButton songId={song.id} />}
       </div>
 
+      <VolumeControl />
       <SpeedControl />
       <FullScreenButton />
     </div>
