@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
 import { Figtree, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
@@ -5,6 +7,7 @@ import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PlayerProvider } from "@/components/player-provider";
 import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -18,8 +21,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "sunao",
-  description: "A Spotify-like music player",
+  metadataBase: new URL(SITE_URL),
+  title: { template: "%s | sunao", default: "sunao" },
+  description: DEFAULT_DESCRIPTION,
+  applicationName: SITE_NAME,
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: DEFAULT_DESCRIPTION,
+    url: "/",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: DEFAULT_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
@@ -51,6 +69,8 @@ export default function RootLayout({
             }}
           />
         </Providers>
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );
