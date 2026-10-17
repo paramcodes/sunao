@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { PlayerBar } from "@/components/layout/player-bar";
 import { Sidebar } from "@/components/layout/sidebar";
+import { EmptyState } from "@/components/ui/empty-state";
 import { usePlaylist, useSongs } from "@/lib/queries";
 import { usePlayer } from "@/stores/player";
 import type { Song } from "@/types";
@@ -98,36 +99,42 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
               </button>
             </div>
           </div>
-          <div className="mt-8 space-y-1">
-            {songs.map((s, i) => (
-              <div
-                key={s.id}
-                className="flex w-full items-center gap-3 rounded px-3 py-2 hover:bg-white/5"
-              >
-                <button
-                  onClick={() => play(s)}
-                  className="flex flex-1 items-center gap-3 text-left"
+          {songs.length === 0 ? (
+            <EmptyState title="Empty playlist" description="Add songs to get started." />
+          ) : (
+            <div className="mt-8 space-y-1">
+              {songs.map((s, i) => (
+                <div
+                  key={s.id}
+                  className="flex w-full items-center gap-3 rounded px-3 py-2 hover:bg-white/5"
                 >
-                  <span className="w-6 text-right text-sm tabular-nums text-white/40">{i + 1}</span>
-                  <div className="h-10 w-10 shrink-0 rounded" style={{ background: s.color }} />
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{s.title}</p>
-                    <p className="truncate text-xs text-white/50">{s.artist}</p>
-                  </div>
-                  <span className="text-xs text-white/50 tabular-nums">
-                    {Math.floor(s.duration / 60)}:{String(s.duration % 60).padStart(2, "0")}
-                  </span>
-                </button>
-                <button
-                  onClick={() => remove(s.id)}
-                  aria-label="Remove"
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-red-500"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+                  <button
+                    onClick={() => play(s)}
+                    className="flex flex-1 items-center gap-3 text-left"
+                  >
+                    <span className="w-6 text-right text-sm tabular-nums text-white/40">
+                      {i + 1}
+                    </span>
+                    <div className="h-10 w-10 shrink-0 rounded" style={{ background: s.color }} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{s.title}</p>
+                      <p className="truncate text-xs text-white/50">{s.artist}</p>
+                    </div>
+                    <span className="text-xs text-white/50 tabular-nums">
+                      {Math.floor(s.duration / 60)}:{String(s.duration % 60).padStart(2, "0")}
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => remove(s.id)}
+                    aria-label="Remove"
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-white/40 hover:bg-white/10 hover:text-red-500"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
       <PlayerBar />
