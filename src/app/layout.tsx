@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Figtree, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PlayerProvider } from "@/components/player-provider";
 import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const figtree = Figtree({
+  variable: "--font-figtree",
   subsets: ["latin"],
 });
 
@@ -28,7 +29,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${figtree.variable} ${geistMono.variable} antialiased`}>
         <Providers>
           <TooltipProvider>
             <PlayerProvider>
@@ -36,6 +37,19 @@ export default function RootLayout({
               {children}
             </PlayerProvider>
           </TooltipProvider>
+          <Toaster
+            theme="dark"
+            position="bottom-right"
+            offset={{ bottom: 120, right: 16 }}
+            mobileOffset={{ bottom: 172, right: 16 }}
+            toastOptions={{
+              classNames: {
+                toast: "rounded-lg border border-white/10 bg-[#1f1f1f] text-white shadow-2xl",
+                description: "text-white/60",
+                actionButton: "bg-red-600 text-white",
+              },
+            }}
+          />
         </Providers>
       </body>
     </html>

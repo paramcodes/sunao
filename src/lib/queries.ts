@@ -1,7 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { ALBUMS, PLAYLISTS, SONGS } from "@/lib/data/songs";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ALBUMS, SONGS } from "@/lib/data/songs";
+import { addLocalPlaylist, listLocalPlaylists } from "@/lib/local-playlists";
 import type { Album, Playlist, Song } from "@/lib/schemas";
 import { AlbumSchema, PlaylistSchema, SongSchema } from "@/lib/schemas";
 import { createClient } from "@/lib/supabase/client";
@@ -9,9 +10,27 @@ import { createClient } from "@/lib/supabase/client";
 type SupabaseClient = ReturnType<typeof createClient>;
 
 const STALE_TIME = 60_000;
+const NEW_PLAYLIST_COVER = "#7f1d1d";
 
 function hasSupabase() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+}
+
+function localSongs() {
+  return SongSchema.array().parse(SONGS);
+}
+
+function localAlbums() {
+  return AlbumSchema.array().parse(ALBUMS);
+}
+
+function localPlaylists() {
+  return PlaylistSchema.array().parse(listLocalPlaylists());
+}
+
+function localPlaylist(id: string) {
+  const playlist = listLocalPlaylists().find((item) => item.id === id);
+  return playlist ? PlaylistSchema.parse(playlist) : undefined;
 }
 
 async function selectAll(supabase: SupabaseClient, table: string) {
@@ -24,7 +43,7 @@ async function selectAll(supabase: SupabaseClient, table: string) {
 
 async function fetchSongs() {
   if (!hasSupabase()) {
-    return SongSchema.array().parse(SONGS);
+    return localSongs();
   }
   const supabase = createClient();
   const rows = await selectAll(supabase, "songs");
@@ -33,7 +52,7 @@ async function fetchSongs() {
 
 async function fetchAlbums() {
   if (!hasSupabase()) {
-    return AlbumSchema.array().parse(ALBUMS);
+    return localAlbums();
   }
   const supabase = createClient();
   const albumRows = await selectAll(supabase, "albums");
@@ -56,7 +75,7 @@ async function fetchAlbums() {
 
 async function fetchPlaylists() {
   if (!hasSupabase()) {
-    return PlaylistSchema.array().parse(PLAYLISTS);
+    return localPlaylists();
   }
   const supabase = createClient();
   const playlistRows = await selectAll(supabase, "playlists");
@@ -89,10 +108,41 @@ async function fetchPlaylists() {
 }
 
 async function fetchPlaylist(id: string) {
-  const playlists = await fetchPlaylists();
-  const playlist = playlists.find((item) => item.id === id);
-  if (!playlist) throw new Error("Playlist not found");
-  return playlist;
+  if (!hasSupabase()) {
+    const playlist = localPlaylist(id);
+    if (!playlist) throw new Error("Playlist not found");
+    return playlist;
+  }
+  const supabase = createClient();
+  const { data: row, error } = await supabase
+    .from("playlists")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!row) throw new Error("Playlist not found");
+
+  let songIds: unknown = row.songIds;
+  if (!Array.isArray(songIds)) songIds = row.song_ids;
+  if (!Array.isArray(songIds)) {
+    const { data: links, error: linkError } = await supabase
+      .from("playlist_songs")
+      .select("*")
+      .eq("playlist_id", id);
+    if (linkError) throw linkError;
+    songIds = (links ?? [])
+      .sort((a, b) => Number(a.position ?? 0) - Number(b.position ?? 0))
+      .map((link) => Number(link.song_id))
+      .filter((value) => Number.isFinite(value));
+  }
+
+  return PlaylistSchema.parse({
+    id: row.id,
+    name: row.name,
+    songIds,
+    cover: row.cover,
+    system: row.system,
+  });
 }
 
 export function useSongs() {
@@ -100,6 +150,7 @@ export function useSongs() {
     queryKey: ["songs"],
     queryFn: fetchSongs,
     staleTime: STALE_TIME,
+    initialData: hasSupabase() ? undefined : localSongs,
   });
 }
 
@@ -108,6 +159,7 @@ export function useAlbums() {
     queryKey: ["albums"],
     queryFn: fetchAlbums,
     staleTime: STALE_TIME,
+    initialData: hasSupabase() ? undefined : localAlbums,
   });
 }
 
@@ -116,6 +168,7 @@ export function usePlaylists() {
     queryKey: ["playlists"],
     queryFn: fetchPlaylists,
     staleTime: STALE_TIME,
+    initialData: hasSupabase() ? undefined : localPlaylists,
   });
 }
 
@@ -124,6 +177,49 @@ export function usePlaylist(id: string) {
     queryKey: ["playlist", id],
     queryFn: () => fetchPlaylist(id),
     staleTime: STALE_TIME,
+    initialData: hasSupabase() ? undefined : () => localPlaylist(id),
+  });
+}
+
+export function useCreatePlaylist() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) throw new Error("A playlist needs a name");
+
+      const id = crypto.randomUUID();
+      const draft = {
+        id,
+        name: trimmed,
+        songIds: [],
+        cover: NEW_PLAYLIST_COVER,
+        system: false,
+      };
+
+      if (!hasSupabase()) {
+        const playlist = PlaylistSchema.parse(draft);
+        addLocalPlaylist(playlist);
+        return playlist;
+      }
+
+      const supabase = createClient();
+      const { data, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      const ownerId = data.user?.id;
+      if (!ownerId) throw new Error("Sign in to create a playlist");
+
+      const { error: insertError } = await supabase
+        .from("playlists")
+        .insert({ ...draft, owner_id: ownerId });
+      if (insertError) throw insertError;
+
+      return PlaylistSchema.parse(draft);
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["playlists"] });
+    },
   });
 }
 

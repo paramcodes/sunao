@@ -3,7 +3,7 @@
 import { SONGS } from "@/lib/data/songs";
 import { usePlayer } from "@/stores/player";
 
-export function QueuePanel() {
+export function QueueContent() {
   const queue = usePlayer((s) => s.queue);
   const currentSongId = usePlayer((s) => s.currentSongId);
   const play = usePlayer((s) => s.play);
@@ -11,11 +11,11 @@ export function QueuePanel() {
   const current = SONGS.find((s) => s.id === currentSongId) ?? SONGS[0];
 
   return (
-    <aside className="hidden w-72 shrink-0 flex-col border-l border-white/5 bg-[#181818] p-4 lg:flex">
+    <div className="flex min-h-0 flex-1 flex-col">
       <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-white/60">Now playing</h3>
       <button
         onClick={() => play(current)}
-        className="mb-5 flex items-center gap-3 rounded-lg bg-white/5 p-3 text-left hover:bg-white/10"
+        className="mb-5 flex items-center gap-3 rounded-lg bg-white/5 p-3 text-left transition-colors duration-150 ease-out hover:bg-white/10"
       >
         <div className="h-12 w-12 shrink-0 rounded-md" style={{ background: current.color }} />
         <div className="min-w-0">
@@ -27,7 +27,7 @@ export function QueuePanel() {
         <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">Queue</h3>
         <span className="text-xs text-white/40">{queue.length} songs</span>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="scroll-pane min-h-0 flex-1 overflow-y-auto">
         {queue.map((id, i) => {
           const s = SONGS.find((x) => x.id === id);
           if (!s) return null;
@@ -35,7 +35,7 @@ export function QueuePanel() {
             <button
               key={id}
               onClick={() => play(s)}
-              className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left hover:bg-white/5 ${
+              className={`flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition-colors duration-150 ease-out hover:bg-white/5 ${
                 id === currentSongId ? "bg-red-600/15" : ""
               }`}
             >
@@ -55,6 +55,17 @@ export function QueuePanel() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+export function QueuePanel() {
+  return (
+    <aside
+      data-slot="queue-panel"
+      className="hidden w-72 shrink-0 flex-col border-l border-white/5 bg-[#181818] p-4 lg:flex"
+    >
+      <QueueContent />
     </aside>
   );
 }
