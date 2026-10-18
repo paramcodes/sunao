@@ -7,6 +7,7 @@ import { usePlayer } from "@/stores/player";
 export function useAudio() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const lastUpdateRef = useRef(0);
+  const lastTimeUpdatePositionRef = useRef<number | null>(null);
 
   const currentSongId = usePlayer((state) => state.currentSongId);
   const customSongs = usePlayer((state) => state.customSongs);
@@ -78,6 +79,7 @@ export function useAudio() {
       const now = Date.now();
       if (now - lastUpdateRef.current < 250) return;
       lastUpdateRef.current = now;
+      lastTimeUpdatePositionRef.current = current.currentTime;
       usePlayer.getState().seek(current.currentTime);
     };
 
@@ -173,6 +175,14 @@ export function useAudio() {
     if (!audio) return;
     const limit = Number.isFinite(audio.duration) ? audio.duration : position;
     const target = Math.min(position, limit);
+    // If this position change is just an echo of a timeupdate we committed from
+    // the audio element itself, the element is already where it should be —
+    // seeking it again (even by a few ms of render latency) causes a stutter.
+    const echoed = lastTimeUpdatePositionRef.current;
+    if (echoed !== null && Math.abs(echoed - target) < 0.05) {
+      lastTimeUpdatePositionRef.current = null;
+      return;
+    }
     if (Math.abs(audio.currentTime - target) > 0.01) {
       audio.currentTime = target;
     }
