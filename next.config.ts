@@ -6,7 +6,7 @@ const nextConfig: NextConfig = {
   },
   /* config options here */
   experimental: {
-    optimizePackageImports: ["lucide-react", "@tanstack/react-query"],
+    optimizePackageImports: ["lucide-react", "@tanstack/react-query", "@base-ui/react"],
   },
   turbopack: {
     rules: {

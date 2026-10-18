@@ -1,3 +1,4 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueuePanel } from "./queue-panel";
@@ -6,9 +7,16 @@ const PANEL_ID = "queue-panel-content";
 
 const queueRegion = () => document.getElementById(PANEL_ID);
 
+const renderQueuePanel = () =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <QueuePanel />
+    </QueryClientProvider>,
+  );
+
 describe("QueuePanel", () => {
   it("renders the now playing section with the toggle expanded", () => {
-    render(<QueuePanel />);
+    renderQueuePanel();
 
     const button = screen.getByRole("button", { name: "Hide queue" });
     expect(button).toHaveAttribute("aria-expanded", "true");
@@ -19,7 +27,7 @@ describe("QueuePanel", () => {
 
   it("collapses the queue when Hide queue is clicked", async () => {
     const user = userEvent.setup();
-    render(<QueuePanel />);
+    renderQueuePanel();
 
     await user.click(screen.getByRole("button", { name: "Hide queue" }));
 
@@ -31,7 +39,7 @@ describe("QueuePanel", () => {
 
   it("restores the queue when Show queue is clicked", async () => {
     const user = userEvent.setup();
-    render(<QueuePanel />);
+    renderQueuePanel();
 
     await user.click(screen.getByRole("button", { name: "Hide queue" }));
     await user.click(screen.getByRole("button", { name: "Show queue" }));

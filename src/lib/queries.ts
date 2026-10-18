@@ -2,19 +2,15 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ALBUMS, SONGS } from "@/lib/data/songs";
-import { addLocalPlaylist, listLocalPlaylists } from "@/lib/local-playlists";
+import { bundledLikedSongIds, bundledPlaylists, createRepo } from "@/lib/library/repo";
 import type { Album, Playlist, Song } from "@/lib/schemas";
-import { AlbumSchema, PlaylistSchema, SongSchema } from "@/lib/schemas";
-import { createClient } from "@/lib/supabase/client";
-
-type SupabaseClient = ReturnType<typeof createClient>;
+import { AlbumSchema, SongSchema } from "@/lib/schemas";
+import { createClient, hasSupabase } from "@/lib/supabase/client";
+import { selectAll } from "@/lib/supabase/rows";
 
 const STALE_TIME = 60_000;
-const NEW_PLAYLIST_COVER = "#7f1d1d";
 
-function hasSupabase() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
-}
+const LIBRARY_QUERY = { staleTime: 0, refetchOnMount: "always" } as const;
 
 function localSongs() {
   return SongSchema.array().parse(SONGS);
@@ -24,29 +20,12 @@ function localAlbums() {
   return AlbumSchema.array().parse(ALBUMS);
 }
 
-function localPlaylists() {
-  return PlaylistSchema.array().parse(listLocalPlaylists());
-}
-
-function localPlaylist(id: string) {
-  const playlist = listLocalPlaylists().find((item) => item.id === id);
-  return playlist ? PlaylistSchema.parse(playlist) : undefined;
-}
-
-async function selectAll(supabase: SupabaseClient, table: string) {
-  const { data, error } = await supabase.from(table).select("*");
-  if (error) throw error;
-  if (Array.isArray(data)) return data as Record<string, unknown>[];
-  if (data && typeof data === "object") return [data as Record<string, unknown>];
-  return [];
-}
-
 async function fetchSongs() {
   if (!hasSupabase()) {
     return localSongs();
   }
   const supabase = createClient();
-  const rows = await selectAll(supabase, "songs");
+  const rows = await selectAll(supabase, "songs", { orderBy: "id" });
   return SongSchema.array().parse(rows);
 }
 
@@ -55,94 +34,29 @@ async function fetchAlbums() {
     return localAlbums();
   }
   const supabase = createClient();
-  const albumRows = await selectAll(supabase, "albums");
+  const albumRows = await selectAll(supabase, "albums", { orderBy: "title" });
   const needsSongs = albumRows.some((row) => !Array.isArray(row.songs));
   let songRows: Record<string, unknown>[] = [];
   if (needsSongs) {
-    songRows = await selectAll(supabase, "songs");
+    songRows = await selectAll(supabase, "songs", { orderBy: "id" });
+  }
+  const songsByAlbum = new Map<string, number[]>();
+  for (const song of songRows) {
+    const albumTitle = song.album;
+    if (typeof albumTitle !== "string") continue;
+    const id = Number(song.id);
+    if (!Number.isFinite(id)) continue;
+    const list = songsByAlbum.get(albumTitle);
+    if (list) list.push(id);
+    else songsByAlbum.set(albumTitle, [id]);
   }
   const prepared = albumRows.map((row) => {
     if (Array.isArray(row.songs)) return row;
     const title = row.title;
-    const songs = songRows
-      .filter((song) => song.album === title)
-      .map((song) => Number(song.id))
-      .filter((value) => Number.isFinite(value));
+    const songs = typeof title === "string" ? (songsByAlbum.get(title) ?? []) : [];
     return { ...row, songs };
   });
   return AlbumSchema.array().parse(prepared);
-}
-
-async function fetchPlaylists() {
-  if (!hasSupabase()) {
-    return localPlaylists();
-  }
-  const supabase = createClient();
-  const playlistRows = await selectAll(supabase, "playlists");
-  const needsSongIds = playlistRows.some(
-    (row) => !Array.isArray(row.songIds) && !Array.isArray(row.song_ids),
-  );
-  let linkRows: Record<string, unknown>[] = [];
-  if (needsSongIds) {
-    linkRows = await selectAll(supabase, "playlist_songs");
-  }
-  const prepared = playlistRows.map((row) => {
-    let songIds: unknown = row.songIds;
-    if (!Array.isArray(songIds)) songIds = row.song_ids;
-    if (!Array.isArray(songIds)) {
-      songIds = linkRows
-        .filter((link) => link.playlist_id === row.id)
-        .sort((a, b) => Number(a.position ?? 0) - Number(b.position ?? 0))
-        .map((link) => Number(link.song_id))
-        .filter((value) => Number.isFinite(value));
-    }
-    return {
-      id: row.id,
-      name: row.name,
-      songIds,
-      cover: row.cover,
-      system: row.system,
-    };
-  });
-  return PlaylistSchema.array().parse(prepared);
-}
-
-async function fetchPlaylist(id: string) {
-  if (!hasSupabase()) {
-    const playlist = localPlaylist(id);
-    if (!playlist) throw new Error("Playlist not found");
-    return playlist;
-  }
-  const supabase = createClient();
-  const { data: row, error } = await supabase
-    .from("playlists")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  if (!row) throw new Error("Playlist not found");
-
-  let songIds: unknown = row.songIds;
-  if (!Array.isArray(songIds)) songIds = row.song_ids;
-  if (!Array.isArray(songIds)) {
-    const { data: links, error: linkError } = await supabase
-      .from("playlist_songs")
-      .select("*")
-      .eq("playlist_id", id);
-    if (linkError) throw linkError;
-    songIds = (links ?? [])
-      .sort((a, b) => Number(a.position ?? 0) - Number(b.position ?? 0))
-      .map((link) => Number(link.song_id))
-      .filter((value) => Number.isFinite(value));
-  }
-
-  return PlaylistSchema.parse({
-    id: row.id,
-    name: row.name,
-    songIds,
-    cover: row.cover,
-    system: row.system,
-  });
 }
 
 export function useSongs() {
@@ -166,18 +80,30 @@ export function useAlbums() {
 export function usePlaylists() {
   return useQuery({
     queryKey: ["playlists"],
-    queryFn: fetchPlaylists,
-    staleTime: STALE_TIME,
-    initialData: hasSupabase() ? undefined : localPlaylists,
+    queryFn: () => createRepo().listPlaylists(),
+    initialData: hasSupabase() ? undefined : bundledPlaylists,
+    ...LIBRARY_QUERY,
   });
 }
 
 export function usePlaylist(id: string) {
   return useQuery({
     queryKey: ["playlist", id],
-    queryFn: () => fetchPlaylist(id),
-    staleTime: STALE_TIME,
-    initialData: hasSupabase() ? undefined : () => localPlaylist(id),
+    queryFn: () => createRepo().getPlaylist(id),
+    initialData: hasSupabase()
+      ? undefined
+      : () => bundledPlaylists().find((playlist) => playlist.id === id),
+    ...LIBRARY_QUERY,
+  });
+}
+
+export function useIsLiked(songId: number) {
+  return useQuery({
+    queryKey: ["liked-songs"],
+    queryFn: () => createRepo().likedSongIds(),
+    initialData: hasSupabase() ? undefined : bundledLikedSongIds,
+    ...LIBRARY_QUERY,
+    select: (ids: number[]) => ids.includes(songId),
   });
 }
 
@@ -188,37 +114,59 @@ export function useCreatePlaylist() {
     mutationFn: async (name: string) => {
       const trimmed = name.trim();
       if (!trimmed) throw new Error("A playlist needs a name");
-
-      const id = crypto.randomUUID();
-      const draft = {
-        id,
-        name: trimmed,
-        songIds: [],
-        cover: NEW_PLAYLIST_COVER,
-        system: false,
-      };
-
-      if (!hasSupabase()) {
-        const playlist = PlaylistSchema.parse(draft);
-        addLocalPlaylist(playlist);
-        return playlist;
-      }
-
-      const supabase = createClient();
-      const { data, error } = await supabase.auth.getUser();
-      if (error) throw error;
-      const ownerId = data.user?.id;
-      if (!ownerId) throw new Error("Sign in to create a playlist");
-
-      const { error: insertError } = await supabase
-        .from("playlists")
-        .insert({ ...draft, owner_id: ownerId });
-      if (insertError) throw insertError;
-
-      return PlaylistSchema.parse(draft);
+      return createRepo().createPlaylist({ name: trimmed });
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["playlists"] });
+    },
+  });
+}
+
+export function useSetPlaylistSongs() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, songIds }: { id: string; songIds: number[] }) =>
+      createRepo().setPlaylistSongs(id, songIds),
+    onMutate: async ({ id, songIds }) => {
+      const key = ["playlist", id];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Playlist>(key);
+      if (previous) queryClient.setQueryData<Playlist>(key, { ...previous, songIds });
+      return { id, previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(["playlist", context.id], context.previous);
+      }
+    },
+    onSettled: (_data, _error, { id }) => {
+      void queryClient.invalidateQueries({ queryKey: ["playlist", id] });
+      void queryClient.invalidateQueries({ queryKey: ["playlists"] });
+    },
+  });
+}
+
+export function useSetLiked() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ songId, liked }: { songId: number; liked: boolean }) =>
+      createRepo().setLiked(songId, liked),
+    onMutate: async ({ songId, liked }) => {
+      const key = ["liked-songs"];
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<number[]>(key);
+      queryClient.setQueryData<number[]>(key, (ids = []) =>
+        liked ? (ids.includes(songId) ? ids : [...ids, songId]) : ids.filter((id) => id !== songId),
+      );
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      if (context) queryClient.setQueryData(["liked-songs"], context.previous);
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: ["liked-songs"] });
     },
   });
 }

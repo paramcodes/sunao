@@ -8,7 +8,7 @@ export default defineConfig({
     environment: "happy-dom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    exclude: ["**/node_modules/**", "**/e2e/**", "**/.next/**"],
+    exclude: ["**/node_modules/**", "**/e2e/**", "**/.next/**", "**/.worktrees/**"],
   },
   resolve: {
     alias: { "@": fileURLToPath(new URL("./src", import.meta.url)) },

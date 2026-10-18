@@ -10,7 +10,6 @@
 - `pnpm lint` / `pnpm lint:fix` — Biome check / autofix.
 - `pnpm format` — Biome format.
 - `pnpm check:comments` — comment allowlist check.
-- `node scripts/check-seo.mjs [url]` — audits a running server for per-route metadata, `robots.txt`, `sitemap.xml`, and share images (default `http://localhost:3000`).
 - `pnpm test` / `pnpm test:watch` — Vitest (unit and component).
 - `pnpm test:e2e` — Playwright. The config starts `pnpm dev` on :3000 and reuses an existing server if one is already up.
 
@@ -19,7 +18,11 @@
 - `queue-renders` — the desktop queue lists items.
 - `queue-toggle` — the queue collapses to a rail and back, and asserts the `inert` and opacity contract.
 - `reduced-motion` — transitions stay scoped to color/opacity under `prefers-reduced-motion`.
+- `persistence` — act, reload, assert: likes survive a reload, playlist edits and created playlists survive, seeded likes drive the heart (`localStorage`, no backend).
+- `full-journey` — the whole surface end to end: idle player, search, like + undo, playlist persistence, mobile shell, and a navigation/interaction perf budget with long-task recording.
 - `verify-phase4` — screenshot capture helper (writes to `artifacts/verify-phase4/`), not an assertion suite.
+
+Screenshot specs write into `artifacts/<name>/`; keep those artifacts out of commits.
 
 ## README media
 `scripts/capture-readme.mjs` drives a running server with Playwright and writes the screenshots plus the demo video into `artifacts/readme/`. It needs `ffmpeg` on `PATH` for the `demo.mp4` and `demo.gif` derived from `demo.webm`.
@@ -42,5 +45,8 @@ node scripts/capture-readme.mjs   # CAPTURE_BASE=http://localhost:3000, CAPTURE_
 - For UI phases, attach a screenshot, GIF, or video to the PR.
 
 ## Verification
-- The verification skill lives at `.opencode/skills/verify-sunao/`. Its `features/` map has recipes for driving the app.
+- The verification skill lives at `.opencode/skills/verify-sunao/`. Its `features/` map has recipes for driving the app; refresh the recipes when a feature changes behavior.
 - Regenerate the README media with the capture script above when the UI changes.
+
+## Worktrees
+Agent work does not always happen in the primary tree. Ignore `.worktrees/` in vitest config and linting so a repo checked out inside the repo doesn't double the test and lint surface.

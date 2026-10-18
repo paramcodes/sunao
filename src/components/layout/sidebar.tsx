@@ -1,7 +1,7 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
-import { Home, Library, LogIn, Plus, Search } from "lucide-react";
+import { Home, Info, Library, LogIn, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -21,6 +21,7 @@ const NAV = [
   { href: "/", label: "Home", icon: Home },
   { href: "/search", label: "Search", icon: Search },
   { href: "/library", label: "Your Library", icon: Library },
+  { href: "/about", label: "About", icon: Info },
 ];
 
 export function Sidebar() {
@@ -80,7 +81,7 @@ export function Sidebar() {
         </Link>
       )}
       <div className="scroll-pane mt-4 flex-1 overflow-y-auto border-t border-white/5 pt-4">
-        <p className="mb-2 px-2 text-xs uppercase tracking-wider text-white/40">Playlists</p>
+        <p className="mb-2 px-2 text-xs font-medium text-white/40">Playlists</p>
         {playlists.map((p) => {
           const active = pathname === `/playlist/${p.id}`;
           return (

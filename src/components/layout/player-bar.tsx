@@ -5,41 +5,63 @@ import {
   Loader2,
   Maximize2,
   Minimize2,
+  Music,
   Pause,
   Play,
+  Repeat,
+  Repeat1,
+  Shuffle,
   SkipBack,
   SkipForward,
+  Volume1,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Kbd } from "@/components/ui/kbd";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { SONGS } from "@/lib/data/songs";
+import { useDelayedFlag } from "@/hooks/use-delayed-flag";
+import { useIsLiked, useSetLiked, useSongs } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/stores/player";
 
-const formatTime = (sec: number) => {
+export const formatTime = (sec: number) => {
   const s = Math.max(0, Math.floor(sec));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 
-function MobileProgress() {
+function MobileSeek() {
   const position = usePlayer((s) => s.position);
   const duration = usePlayer((s) => s.duration);
-  const pct = duration ? Math.min(100, (position / duration) * 100) : 0;
+  const seek = usePlayer((s) => s.seek);
+  const [scrub, setScrub] = useState<number | null>(null);
+
+  const max = Number.isFinite(duration) ? (duration as number) : 0;
+  const shown = scrub ?? position;
+
   return (
-    <div className="absolute inset-x-0 top-0 h-0.5 bg-white/10 md:hidden">
-      <div
-        className="h-full w-full origin-left bg-white"
-        style={{ transform: `scaleX(${pct / 100})` }}
+    <div data-slot="mobile-seek" className="absolute inset-x-0 top-0 z-10 md:hidden">
+      <Slider
+        className="[&_[data-slot=slider-control]]:h-3 [&_[data-slot=slider-track]]:h-1 [&_[data-slot=slider-track]]:rounded-none [&_[data-slot=slider-range]]:bg-white [&_[data-slot=slider-track]]:bg-white/10 [&_[data-slot=slider-thumb]]:size-2.5 [&_[data-slot=slider-thumb]]:border-0"
+        min={0}
+        max={max || 1}
+        step={0.1}
+        value={[shown]}
+        getAriaLabel={() => "Seek"}
+        onValueChange={(value) => setScrub(Array.isArray(value) ? value[0] : value)}
+        onValueCommitted={(value) => {
+          seek(Array.isArray(value) ? value[0] : value);
+          setScrub(null);
+        }}
       />
     </div>
   );
 }
 
-function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
+export function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
   const position = usePlayer((s) => s.position);
   const duration = usePlayer((s) => s.duration);
   const seek = usePlayer((s) => s.seek);
@@ -54,7 +76,7 @@ function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
       <Slider
         className="flex-1"
         min={0}
-        max={max}
+        max={max || 1}
         step={0.1}
         value={[shown]}
         getAriaLabel={() => "Seek"}
@@ -69,10 +91,9 @@ function SeekBar({ fallbackDuration }: { fallbackDuration: number }) {
   );
 }
 
-function LikeButton({ songId }: { songId: number }) {
-  const liked = usePlayer((s) => s.liked);
-  const toggleLike = usePlayer((s) => s.toggleLike);
-  const isLiked = liked.has(songId);
+export function LikeButton({ songId }: { songId: number }) {
+  const { data: isLiked = false } = useIsLiked(songId);
+  const setLiked = useSetLiked();
   const [pop, setPop] = useState(false);
 
   useEffect(() => {
@@ -82,16 +103,18 @@ function LikeButton({ songId }: { songId: number }) {
     return () => clearTimeout(t);
   }, [isLiked]);
 
+  const toggle = (liked: boolean) => setLiked.mutate({ songId, liked });
+
   return (
     <Tooltip>
       <TooltipTrigger
         render={
           <button
             onClick={() => {
-              toggleLike(songId);
+              toggle(!isLiked);
               if (isLiked) {
                 toast("Removed from Liked Songs", {
-                  action: { label: "Undo", onClick: () => toggleLike(songId) },
+                  action: { label: "Undo", onClick: () => toggle(true) },
                 });
               } else {
                 toast.success("Saved to Liked Songs");
@@ -100,7 +123,7 @@ function LikeButton({ songId }: { songId: number }) {
             aria-label={isLiked ? "Unlike" : "Like"}
             aria-pressed={isLiked}
             className={cn(
-              "btn-ghost flex h-8 w-8 items-center justify-center rounded-full",
+              "btn-ghost flex h-11 w-11 items-center justify-center rounded-full",
               isLiked && "text-red-500",
             )}
           />
@@ -119,119 +142,285 @@ function LikeButton({ songId }: { songId: number }) {
   );
 }
 
-function SpeedControl() {
-  const speed = usePlayer((s) => s.speed);
-  const setSpeed = usePlayer((s) => s.setSpeed);
+function ShuffleButton() {
+  const isShuffle = usePlayer((s) => s.isShuffle);
+  const toggleShuffle = usePlayer((s) => s.toggleShuffle);
 
-  return (
-    <div className="group relative hidden md:block">
-      <button className="btn-ghost rounded-lg px-3 py-1.5 text-sm font-semibold">{speed}×</button>
-      <div className="invisible absolute right-0 bottom-full mb-2 flex origin-bottom-right translate-y-1 scale-95 flex-col gap-1 rounded-lg border border-white/10 bg-[#1f1f1f] p-2 opacity-0 shadow-2xl transition-[opacity,transform,visibility] duration-150 ease-out [@media(hover:hover)]:group-hover:visible [@media(hover:hover)]:group-hover:translate-y-0 [@media(hover:hover)]:group-hover:scale-100 [@media(hover:hover)]:group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:scale-100 group-focus-within:opacity-100">
-        {[0.5, 1, 1.25, 1.5, 2].map((v) => (
-          <button
-            key={v}
-            onClick={() => setSpeed(v)}
-            className="rounded px-2 py-1 text-left text-sm transition-colors duration-100 ease-out hover:bg-white/10 active:scale-[0.97]"
-          >
-            {v}×
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function FullScreenButton() {
-  const [isFull, setIsFull] = useState(false);
-
-  useEffect(() => {
-    const onChange = () => setIsFull(Boolean(document.fullscreenElement));
-    document.addEventListener("fullscreenchange", onChange);
-    onChange();
-    return () => document.removeEventListener("fullscreenchange", onChange);
-  }, []);
-
-  const toggle = () => {
-    if (document.fullscreenElement) {
-      void document.exitFullscreen().catch(() => {});
-      return;
-    }
-    void document.documentElement.requestFullscreen().catch(() => {
-      toast.error("Full screen isn't available in this browser");
-    });
-  };
+  const label = isShuffle ? "Disable shuffle" : "Enable shuffle";
 
   return (
     <Tooltip>
       <TooltipTrigger
         render={
           <button
-            onClick={toggle}
-            aria-label={isFull ? "Exit full screen" : "Full screen"}
-            aria-pressed={isFull}
+            type="button"
+            onClick={toggleShuffle}
+            aria-label={label}
+            aria-pressed={isShuffle}
+            className={cn(
+              "btn-ghost relative flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+              isShuffle ? "text-red-500" : "text-white/70",
+            )}
+          />
+        }
+      >
+        <Shuffle className="h-[18px] w-[18px]" />
+        {isShuffle && (
+          <span className="absolute bottom-1 size-1 rounded-full bg-red-500" aria-hidden="true" />
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{isShuffle ? "Shuffle on" : "Shuffle off"}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function RepeatButton() {
+  const repeatMode = usePlayer((s) => s.repeatMode);
+  const toggleRepeat = usePlayer((s) => s.toggleRepeat);
+
+  const Icon = repeatMode === "one" ? Repeat1 : Repeat;
+  const isActive = repeatMode !== "off";
+  const label =
+    repeatMode === "off" ? "Repeat: off" : repeatMode === "all" ? "Repeat: all" : "Repeat: one";
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            onClick={toggleRepeat}
+            aria-label={label}
+            aria-pressed={isActive}
+            className={cn(
+              "btn-ghost relative flex h-9 w-9 items-center justify-center rounded-full transition-colors",
+              isActive ? "text-red-500" : "text-white/70",
+            )}
+          />
+        }
+      >
+        <Icon className="h-[18px] w-[18px]" />
+        {isActive && (
+          <span className="absolute bottom-1 size-1 rounded-full bg-red-500" aria-hidden="true" />
+        )}
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
+  );
+}
+
+function VolumeControl() {
+  const volume = usePlayer((s) => s.volume);
+  const isMuted = usePlayer((s) => s.isMuted);
+  const setVolume = usePlayer((s) => s.setVolume);
+  const toggleMute = usePlayer((s) => s.toggleMute);
+
+  const displayVolume = isMuted ? 0 : volume;
+  const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
+  const label = isMuted || volume === 0 ? "Unmute" : "Mute";
+
+  return (
+    <div className="hidden items-center gap-1.5 md:flex">
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <button
+              type="button"
+              onClick={toggleMute}
+              aria-label={label}
+              className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+            />
+          }
+        >
+          <VolumeIcon className="h-[18px] w-[18px]" />
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+      <div className="w-20 lg:w-24">
+        <Slider
+          min={0}
+          max={1}
+          step={0.01}
+          value={[displayVolume]}
+          getAriaLabel={() => "Volume"}
+          onValueChange={(val) => {
+            const next = Array.isArray(val) ? val[0] : val;
+            setVolume(next);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+export function SpeedControl() {
+  const speed = usePlayer((s) => s.speed);
+  const setSpeed = usePlayer((s) => s.setSpeed);
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="relative hidden md:block">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        aria-label="Playback speed"
+        className="btn-ghost rounded-lg px-3 py-1.5 text-sm font-semibold"
+      >
+        {speed}×
+      </button>
+      {open && (
+        <>
+          <button
+            type="button"
+            aria-label="Close speed menu"
+            className="fixed inset-0 z-40 cursor-default"
+            onClick={() => setOpen(false)}
+          />
+          <div
+            role="menu"
+            className="absolute right-0 bottom-full z-50 mb-2 flex origin-bottom-right flex-col gap-1 rounded-lg border border-white/10 bg-[#1f1f1f] p-2 shadow-2xl"
+          >
+            {[0.5, 1, 1.25, 1.5, 2].map((v) => (
+              <button
+                key={v}
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setSpeed(v);
+                  setOpen(false);
+                }}
+                className="rounded px-2 py-1 text-left text-sm transition-colors duration-100 ease-out hover:bg-white/10 active:scale-[0.97]"
+              >
+                {v}×
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function NowPlayingButton() {
+  const isNowPlayingOpen = usePlayer((s) => s.isNowPlayingOpen);
+  const toggleNowPlaying = usePlayer((s) => s.toggleNowPlaying);
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            id="now-playing-trigger"
+            onClick={toggleNowPlaying}
+            aria-label={isNowPlayingOpen ? "Exit now playing" : "Open now playing"}
+            aria-expanded={isNowPlayingOpen}
             className="btn-ghost hidden h-9 w-9 items-center justify-center rounded-full md:flex"
           />
         }
       >
-        {isFull ? (
+        {isNowPlayingOpen ? (
           <Minimize2 className="h-[18px] w-[18px]" />
         ) : (
           <Maximize2 className="h-[18px] w-[18px]" />
         )}
       </TooltipTrigger>
-      <TooltipContent>{isFull ? "Exit full screen" : "Full screen"}</TooltipContent>
+      <TooltipContent>{isNowPlayingOpen ? "Collapse now playing" : "Now playing"}</TooltipContent>
     </Tooltip>
   );
 }
 
 export function PlayerBar() {
   const currentSongId = usePlayer((s) => s.currentSongId);
+  const customSongs = usePlayer((s) => s.customSongs);
   const isPlaying = usePlayer((s) => s.isPlaying);
   const isBuffering = usePlayer((s) => s.isBuffering);
+  const showBuffering = useDelayedFlag(isBuffering, 200);
   const play = usePlayer((s) => s.play);
   const togglePlay = usePlayer((s) => s.togglePlay);
   const next = usePlayer((s) => s.next);
   const prev = usePlayer((s) => s.prev);
+  const setNowPlayingOpen = usePlayer((s) => s.setNowPlayingOpen);
+  const { data: songs = [] } = useSongs();
 
-  const song = SONGS.find((s) => s.id === currentSongId) ?? SONGS[0];
-  if (!song) return null;
+  const touchStartY = useRef<number | null>(null);
+
+  const song =
+    (currentSongId !== null ? customSongs[currentSongId] : null) ??
+    songs.find((s) => s.id === currentSongId) ??
+    null;
+  const idle = song === null;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current !== null) {
+      const diff = touchStartY.current - e.changedTouches[0].clientY;
+      if (diff > 40) {
+        setNowPlayingOpen(true);
+      }
+      touchStartY.current = null;
+    }
+  };
 
   return (
     <div
       data-slot="player-bar"
-      className="relative flex items-center gap-2 border-t border-white/5 bg-[#181818] px-3 py-3 sm:gap-3 sm:px-4 sm:py-4"
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      className="relative flex items-center gap-2 border-t border-white/5 bg-[var(--bg-card)] px-3 py-3 sm:gap-3 sm:px-4 sm:py-4"
     >
-      <MobileProgress />
+      <MobileSeek />
 
       <button
-        onClick={() => play(song)}
-        className="btn-ghost flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 sm:flex-none"
+        type="button"
+        onClick={() => {
+          if (typeof window !== "undefined" && window.innerWidth < 768) {
+            setNowPlayingOpen(true);
+          } else if (song) {
+            play(song);
+          }
+        }}
+        disabled={idle}
+        className="btn-ghost flex min-w-0 flex-1 items-center gap-3 rounded-lg px-2 py-1.5 disabled:cursor-default sm:flex-none"
       >
         <div
           className={cn(
-            "relative h-12 w-12 shrink-0 overflow-hidden rounded-lg sm:h-14 sm:w-14",
+            "relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg sm:h-14 sm:w-14",
             isPlaying && "motion-safe:animate-[sunao-pulse_2.4s_ease-in-out_infinite]",
           )}
-          style={{ background: song.color ?? "#282828" }}
+          style={{
+            background: song?.color ?? "#282828",
+            boxShadow: song?.color ? `0 0 28px ${song.color}55` : undefined,
+          }}
         >
-          {song.artwork && (
-            <Image src={song.artwork} alt="" fill sizes="56px" className="object-cover" />
+          {song?.artwork ? (
+            <Image src={song.artwork} alt={song.title} fill sizes="56px" className="object-cover" />
+          ) : (
+            <Music className="h-5 w-5 text-white/30" />
           )}
         </div>
         <div className="min-w-0 text-left sm:max-w-44">
-          <p className="truncate text-sm font-semibold">{song.title}</p>
-          <p className="truncate text-xs text-white/60">{song.artist}</p>
+          <p className="truncate text-sm font-semibold">{song?.title ?? "Nothing playing"}</p>
+          <p className="truncate text-xs text-white/60">
+            {song?.artist ?? "Choose a song to start"}
+          </p>
         </div>
       </button>
 
       <div className="flex items-center gap-1">
+        <ShuffleButton />
         <Tooltip>
           <TooltipTrigger
             render={
               <button
                 onClick={prev}
                 aria-label="Previous track"
-                className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+                disabled={idle}
+                className="btn-ghost flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-40"
               />
             }
           >
@@ -244,13 +433,16 @@ export function PlayerBar() {
             render={
               <button
                 onClick={togglePlay}
+                disabled={idle}
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-white transition-[background-color,transform] duration-normal ease-out hover:bg-red-700 active:scale-95"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-red-600 text-white transition-[background-color,transform] duration-normal ease-out hover:bg-red-700 active:scale-95 disabled:cursor-default disabled:bg-white/10 disabled:text-white/40"
               />
             }
           >
-            {isBuffering && isPlaying ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+            {showBuffering && isPlaying ? (
+              <div className="animate-spin">
+                <Loader2 className="h-5 w-5" />
+              </div>
             ) : isPlaying ? (
               <Pause className="h-5 w-5" />
             ) : (
@@ -267,7 +459,8 @@ export function PlayerBar() {
               <button
                 onClick={next}
                 aria-label="Next track"
-                className="btn-ghost flex h-9 w-9 items-center justify-center rounded-full"
+                disabled={idle}
+                className="btn-ghost flex h-11 w-11 items-center justify-center rounded-full disabled:opacity-40"
               />
             }
           >
@@ -275,18 +468,20 @@ export function PlayerBar() {
           </TooltipTrigger>
           <TooltipContent>Next</TooltipContent>
         </Tooltip>
+        <RepeatButton />
       </div>
 
       <div className="hidden min-w-0 max-w-[620px] flex-1 items-center gap-3 md:flex">
-        <SeekBar fallbackDuration={song.duration} />
+        <SeekBar fallbackDuration={song?.duration ?? 0} />
       </div>
 
       <div className="ml-auto flex items-center gap-1 md:ml-0">
-        <LikeButton songId={song.id} />
+        {song && <LikeButton songId={song.id} />}
       </div>
 
+      <VolumeControl />
       <SpeedControl />
-      <FullScreenButton />
+      <NowPlayingButton />
     </div>
   );
 }

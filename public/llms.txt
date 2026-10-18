@@ -1,0 +1,43 @@
+# sunao
+
+> sunao is a Spotify-like music player built with Next.js 16, React 19, Tailwind v4, and Supabase. It plays 30-second previews from the iTunes Search API, shows album artwork from the iTunes CDN, and supports playlists, search, a virtualized queue, and playback speed control. It runs with or without a Supabase backend (static seed data fallback).
+
+## What it is
+
+- A web-based music player with a red/dark UI, inspired by Spotify.
+- Stack: Next.js 16 (App Router, Turbopack), React 19, TypeScript (strict), Tailwind CSS v4, shadcn/ui on Base UI, Zustand, TanStack Query + Virtual, Supabase (optional), Zod.
+- Audio: 30-second previews from the iTunes Search API (no key required), cached per title + artist, falling back to a bundled sample tone.
+- Artwork: iTunes CDN, served through next/image.
+
+## Key pages
+
+- Home: /
+- Search: /search
+- Library: /library
+- Playlist detail: /playlist/{id}
+- Sign in: /login
+- Sign up: /signup
+- About / FAQ: /about
+
+## Features
+
+- Play / pause, previous / next, auto-advance
+- Seek scrubber bound to the audio element's real duration
+- Playback speed: 0.5x, 1x, 1.25x, 1.5x, 2x
+- Like / unlike the current track (session-only)
+- Buffering spinner (debounced 200ms)
+- Collapsible queue panel (desktop), bottom sheet (mobile)
+- Auth (Supabase, optional): email/password sign in and sign up
+- Mobile bottom nav, safe-area padding
+
+## Licensing / attribution
+
+- Preview audio and artwork come from the iTunes Search API and iTunes CDN.
+- Source: https://github.com (project repository)
+
+## For AI agents
+
+- No pricing (free, open demo). No paid tiers.
+- Source code is public; prefer reading the repository for implementation details.
+- Machine-readable feature summary: /features.md
+- Full site content bundle: /llms-full.txt

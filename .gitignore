@@ -51,3 +51,4 @@ todo.md
 
 # agent worktrees
 .worktrees/
+playwright.tmp.config.ts

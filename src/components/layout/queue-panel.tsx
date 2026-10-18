@@ -1,11 +1,11 @@
 "use client";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { PanelRightClose, PanelRightOpen } from "lucide-react";
+import { Music, PanelRightClose, PanelRightOpen } from "lucide-react";
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { SONGS } from "@/lib/data/songs";
+import { useSongs } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { usePlayer } from "@/stores/player";
 
@@ -14,9 +14,18 @@ const PANEL_ID = "queue-panel-content";
 export function QueueContent() {
   const queue = usePlayer((s) => s.queue);
   const currentSongId = usePlayer((s) => s.currentSongId);
+  const customSongs = usePlayer((s) => s.customSongs);
   const play = usePlayer((s) => s.play);
+  const { data: songs = [] } = useSongs();
 
-  const current = SONGS.find((s) => s.id === currentSongId) ?? SONGS[0];
+  const songById = useMemo(() => {
+    const map = new Map(songs.map((song) => [song.id, song]));
+    for (const [idStr, s] of Object.entries(customSongs)) {
+      map.set(Number(idStr), s);
+    }
+    return map;
+  }, [songs, customSongs]);
+  const current = songById.get(currentSongId ?? -1) ?? null;
 
   const parentRef = useRef<HTMLDivElement>(null);
   const rowVirtualizer = useVirtualizer({
@@ -26,30 +35,46 @@ export function QueueContent() {
     overscan: 6,
   });
 
-  if (!current) return null;
-
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-white/60">Now playing</h3>
-      <button
-        onClick={() => play(current)}
-        className="mb-5 flex items-center gap-3 rounded-lg bg-white/5 p-3 text-left transition-colors duration-150 ease-out hover:bg-white/10"
-      >
-        <div
-          className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md"
-          style={{ background: current.color ?? "#282828" }}
+      <h3 className="mb-3 text-xs font-semibold text-white/60">Now playing</h3>
+      {current ? (
+        <button
+          onClick={() => play(current)}
+          className="mb-5 flex items-center gap-3 rounded-lg bg-white/5 p-3 text-left transition-colors duration-150 ease-out hover:bg-white/10"
         >
-          {current.artwork && (
-            <Image src={current.artwork} alt="" fill sizes="48px" className="object-cover" />
-          )}
+          <div
+            className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md"
+            style={{ background: current.color ?? "#282828" }}
+          >
+            {current.artwork ? (
+              <Image
+                src={current.artwork}
+                alt={current.title}
+                fill
+                sizes="48px"
+                className="object-cover"
+              />
+            ) : null}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">{current.title}</p>
+            <p className="truncate text-xs text-white/50">{current.artist}</p>
+          </div>
+        </button>
+      ) : (
+        <div className="mb-5 flex items-center gap-3 rounded-lg bg-white/5 p-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-white/5">
+            <Music className="h-5 w-5 text-white/30" />
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white/60">Nothing playing</p>
+            <p className="truncate text-xs text-white/40">Choose a song to start</p>
+          </div>
         </div>
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold">{current.title}</p>
-          <p className="truncate text-xs text-white/50">{current.artist}</p>
-        </div>
-      </button>
+      )}
       <div className="mb-2 flex items-center justify-between">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">Queue</h3>
+        <h3 className="text-xs font-semibold text-white/60">Queue</h3>
         <span className="text-xs text-white/40">
           {queue.length} {queue.length === 1 ? "song" : "songs"}
         </span>
@@ -64,7 +89,7 @@ export function QueueContent() {
         >
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const id = queue[virtualRow.index];
-            const s = SONGS.find((x) => x.id === id);
+            const s = songById.get(id);
             if (!s) return null;
             return (
               <button
@@ -90,9 +115,15 @@ export function QueueContent() {
                   className="relative h-8 w-8 shrink-0 overflow-hidden rounded"
                   style={{ background: s.color ?? "#282828" }}
                 >
-                  {s.artwork && (
-                    <Image src={s.artwork} alt="" fill sizes="32px" className="object-cover" />
-                  )}
+                  {s.artwork ? (
+                    <Image
+                      src={s.artwork}
+                      alt={s.title}
+                      fill
+                      sizes="32px"
+                      className="object-cover"
+                    />
+                  ) : null}
                 </div>
                 <div className="min-w-0 flex-1">
                   <p
@@ -121,7 +152,7 @@ export function QueuePanel() {
     <aside
       data-slot="queue-panel"
       className={cn(
-        "hidden shrink-0 flex-col overflow-hidden border-l border-white/5 bg-[#181818] transition-[width,padding] duration-[var(--duration-drawer)] ease-[var(--ease-drawer)] lg:flex",
+        "hidden h-full shrink-0 flex-col overflow-hidden border-l border-white/5 bg-[var(--bg-card)] transition-[width,padding] duration-[var(--duration-drawer)] ease-[var(--ease-drawer)] lg:flex",
         open ? "w-72 p-4" : "w-10 px-1 py-4",
       )}
     >
