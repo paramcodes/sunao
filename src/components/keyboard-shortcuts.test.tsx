@@ -79,19 +79,15 @@ describe("KeyboardShortcuts", () => {
     const textarea = getByTestId("bio-textarea");
     const editable = getByTestId("editable-div");
 
-    // Space in input should not toggle play
     fireEvent.keyDown(input, { code: "Space" });
     expect(usePlayer.getState().isPlaying).toBe(false);
 
-    // ArrowUp in input should not adjust volume
     fireEvent.keyDown(input, { key: "ArrowUp" });
     expect(usePlayer.getState().volume).toBe(0.5);
 
-    // J in textarea should not skip track
     fireEvent.keyDown(textarea, { key: "j" });
     expect(usePlayer.getState().currentSongId).toBe(1);
 
-    // K in contentEditable should not skip track
     fireEvent.keyDown(editable, { key: "k" });
     expect(usePlayer.getState().currentSongId).toBe(1);
   });

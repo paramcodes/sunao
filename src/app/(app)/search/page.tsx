@@ -150,7 +150,7 @@ export default function SearchPage() {
         }
       } catch {
         if (controller.signal.aborted) return;
-        // Offline / error fallback to bundled songs, albums, and artists
+
         const lower = trimmed.toLowerCase();
         setSongs(fallbackSearchSongs(trimmed));
         setAlbums(fallbackSearchAlbums(trimmed));

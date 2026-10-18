@@ -45,9 +45,7 @@ export function writeStoredPreferences(prefs: Partial<PlayerPreferences>) {
     const current = readStoredPreferences();
     const updated = { ...current, ...prefs };
     window.localStorage.setItem(PLAYER_STORAGE_KEY, JSON.stringify(updated));
-  } catch {
-    // Ignore storage write failures (quota exceeded, private mode)
-  }
+  } catch {}
 }
 
 function shuffleArray<T>(array: readonly T[]): T[] {

@@ -2,7 +2,6 @@ import type { createClient } from "@/lib/supabase/client";
 
 export type SupabaseClient = ReturnType<typeof createClient>;
 
-/** Select every row of a table, normalising a single object into a one-row list. */
 type SelectAllOptions = {
   limit?: number;
   orderBy?: string;

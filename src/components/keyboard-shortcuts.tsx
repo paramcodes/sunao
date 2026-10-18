@@ -60,14 +60,12 @@ export function KeyboardShortcuts() {
       const { currentSongId, volume, isLiked, togglePlay, next, prev, setVolume, setLiked } =
         stateRef.current;
 
-      // Space: play/pause
       if (event.code === "Space" && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         togglePlay();
         return;
       }
 
-      // Shift+N or J: next track
       if (
         (event.shiftKey && (event.key === "N" || event.key === "n")) ||
         (!event.shiftKey &&
@@ -81,7 +79,6 @@ export function KeyboardShortcuts() {
         return;
       }
 
-      // Shift+P or K: previous track
       if (
         (event.shiftKey && (event.key === "P" || event.key === "p")) ||
         (!event.shiftKey &&
@@ -95,7 +92,6 @@ export function KeyboardShortcuts() {
         return;
       }
 
-      // L: like/unlike current track
       if (
         !event.shiftKey &&
         !event.ctrlKey &&
@@ -121,7 +117,6 @@ export function KeyboardShortcuts() {
         return;
       }
 
-      // ArrowUp: volume up (step 0.05)
       if (
         !event.shiftKey &&
         !event.ctrlKey &&
@@ -135,7 +130,6 @@ export function KeyboardShortcuts() {
         return;
       }
 
-      // ArrowDown: volume down (step 0.05)
       if (
         !event.shiftKey &&
         !event.ctrlKey &&

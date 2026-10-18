@@ -24,7 +24,6 @@ function orderLinks(links: Record<string, unknown>[]) {
     .filter((value) => Number.isFinite(value));
 }
 
-/** Playlists and likes in Postgres, under RLS. */
 export function createSupabaseRepo(): LibraryRepo {
   return {
     async listPlaylists() {

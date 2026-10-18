@@ -10,9 +10,6 @@ import { selectAll } from "@/lib/supabase/rows";
 
 const STALE_TIME = 60_000;
 
-// The library lives in storage the server cannot read, so the bundled seed paints first
-// and the repo always refetches on mount. `initialData` alone would mark the bundled
-// value fresh for `staleTime` and the stored document would never load.
 const LIBRARY_QUERY = { staleTime: 0, refetchOnMount: "always" } as const;
 
 function localSongs() {

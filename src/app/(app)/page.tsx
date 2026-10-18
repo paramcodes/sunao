@@ -39,19 +39,16 @@ export default function Home() {
     play(song);
   };
 
-  // Compute "Made For You" recommendations based on play history / favorite artists
   const recommendations = useMemo(() => {
     if (songs.length === 0) return [];
 
     const playedIds = new Set(recentlyPlayed.map((s) => s.id));
     const favoriteArtists = new Set(recentlyPlayed.map((s) => s.artist.toLowerCase()));
 
-    // Prefer unplayed songs from favorite artists
     const artistMatches = songs.filter(
       (s) => favoriteArtists.has(s.artist.toLowerCase()) && !playedIds.has(s.id),
     );
 
-    // Then other unplayed songs
     const unplayedOthers = songs.filter(
       (s) => !favoriteArtists.has(s.artist.toLowerCase()) && !playedIds.has(s.id),
     );
@@ -61,7 +58,6 @@ export default function Home() {
       return pool.slice(0, 6);
     }
 
-    // If library is small or all have been played, return a curated slice of library
     return songs.slice(0, 6);
   }, [songs, recentlyPlayed]);
 
@@ -89,7 +85,6 @@ export default function Home() {
         <EmptyState title="Nothing here yet" description="Add songs to get started." />
       ) : (
         <>
-          {/* Recently Played Section */}
           {recentlyPlayed.length > 0 && (
             <section className="mt-8">
               <h2 className="text-lg font-semibold">Recently Played</h2>
@@ -130,7 +125,6 @@ export default function Home() {
             </section>
           )}
 
-          {/* Made For You Section */}
           {recommendations.length > 0 && (
             <section className="mt-8">
               <div className="flex items-center gap-2">
@@ -177,7 +171,6 @@ export default function Home() {
             </section>
           )}
 
-          {/* Featured Albums Section */}
           <section className="mt-8">
             <h2 className="text-lg font-semibold">Albums</h2>
             <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
@@ -220,7 +213,6 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Library Songs Section */}
           <section className="mt-8">
             <h2 className="text-lg font-semibold">Songs</h2>
             <div className="mt-3 space-y-1">

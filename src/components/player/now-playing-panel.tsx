@@ -45,13 +45,12 @@ export function NowPlayingPanel() {
   const song = songs.find((s) => s.id === currentSongId) ?? null;
   const idle = song === null;
 
-  // Track the opening trigger and manage focus return on close
   useEffect(() => {
     if (isNowPlayingOpen) {
       if (document.activeElement instanceof HTMLElement) {
         triggerRef.current = document.activeElement;
       }
-      // Focus close button on open
+
       requestAnimationFrame(() => {
         closeButtonRef.current?.focus();
       });
@@ -61,7 +60,6 @@ export function NowPlayingPanel() {
     }
   }, [isNowPlayingOpen]);
 
-  // Handle Escape key to dismiss
   useEffect(() => {
     if (!isNowPlayingOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -89,7 +87,6 @@ export function NowPlayingPanel() {
           : undefined,
       }}
     >
-      {/* Top Bar */}
       <div className="flex items-center justify-between">
         <Tooltip>
           <TooltipTrigger
@@ -110,7 +107,6 @@ export function NowPlayingPanel() {
           </TooltipContent>
         </Tooltip>
 
-        {/* View Switcher: Artwork / Lyrics */}
         <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1">
           <button
             type="button"
@@ -140,7 +136,6 @@ export function NowPlayingPanel() {
           </button>
         </div>
 
-        {/* Queue Drawer Link */}
         <Tooltip>
           <TooltipTrigger
             render={
@@ -159,7 +154,6 @@ export function NowPlayingPanel() {
         </Tooltip>
       </div>
 
-      {/* Main Center Area: Extra-large Artwork or Lyrics */}
       <div className="flex min-h-0 flex-1 items-center justify-center py-4">
         {activeTab === "artwork" ? (
           <div className="flex flex-col items-center">
@@ -192,9 +186,7 @@ export function NowPlayingPanel() {
         )}
       </div>
 
-      {/* Bottom Controls Area */}
       <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
-        {/* Track Title, Artist, and Like Button */}
         <div className="flex items-center justify-between">
           <div className="min-w-0 pr-4">
             <h2 className="truncate text-xl font-bold text-white sm:text-2xl lg:text-3xl">
@@ -207,12 +199,10 @@ export function NowPlayingPanel() {
           {song && <LikeButton songId={song.id} />}
         </div>
 
-        {/* Seek Slider */}
         <div className="flex items-center gap-3">
           <SeekBar fallbackDuration={song?.duration ?? 0} />
         </div>
 
-        {/* Transport Controls */}
         <div className="flex items-center justify-between pt-2">
           <SpeedControl />
 
@@ -276,7 +266,6 @@ export function NowPlayingPanel() {
             </Tooltip>
           </div>
 
-          {/* Lyrics toggle button on bottom row */}
           <Tooltip>
             <TooltipTrigger
               render={
@@ -299,7 +288,6 @@ export function NowPlayingPanel() {
         </div>
       </div>
 
-      {/* Queue Drawer Link Sheet */}
       <Sheet open={queueOpen} onOpenChange={setQueueOpen}>
         <SheetContent
           side="right"

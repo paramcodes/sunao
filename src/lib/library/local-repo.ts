@@ -42,9 +42,7 @@ function readDoc(): LibraryDoc {
       cachedDoc = parsed.data;
       return cachedDoc;
     }
-  } catch {
-    // Corrupt JSON / storage unavailable: fall through to the bundled seed.
-  }
+  } catch {}
   cachedDoc = seedDoc();
   cachedDocRaw = null;
   return cachedDoc;
@@ -53,9 +51,7 @@ function readDoc(): LibraryDoc {
 function writeDoc(doc: LibraryDoc) {
   try {
     window.localStorage.setItem(LIBRARY_STORAGE_KEY, JSON.stringify(doc));
-  } catch {
-    // Ignore storage failures (private mode / quota exceeded).
-  }
+  } catch {}
   cachedDoc = doc;
   try {
     cachedDocRaw = window.localStorage.getItem(LIBRARY_STORAGE_KEY);
@@ -83,7 +79,6 @@ if (typeof window !== "undefined") {
   });
 }
 
-/** The default backend: one versioned localStorage document. */
 export function createLocalRepo(): LibraryRepo {
   return {
     async listPlaylists() {

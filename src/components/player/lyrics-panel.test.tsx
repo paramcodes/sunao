@@ -42,7 +42,6 @@ describe("LyricsPanel", () => {
     usePlayer.setState({ position: 5 });
     renderWithClient(<LyricsPanel song={mockSong} />);
 
-    // At 5 seconds into Come Together, second line ("He come groovin' up slowly", time 4) should be active
     const activeLine = screen.getByText("He come groovin' up slowly");
     expect(activeLine).toHaveClass("font-bold");
   });
@@ -51,7 +50,7 @@ describe("LyricsPanel", () => {
     const user = userEvent.setup();
     renderWithClient(<LyricsPanel song={mockSong} />);
 
-    const targetLine = screen.getByText("He got joo joo eyeball"); // time 8
+    const targetLine = screen.getByText("He got joo joo eyeball");
     await user.click(targetLine);
 
     expect(usePlayer.getState().position).toBe(8);

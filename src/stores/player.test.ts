@@ -73,8 +73,8 @@ describe("player store", () => {
 
     it("restores audible volume when unmuting from volume 0", () => {
       usePlayer.getState().setVolume(0);
-      usePlayer.getState().toggleMute(); // muted = true
-      usePlayer.getState().toggleMute(); // unmuted -> sets volume to 0.25
+      usePlayer.getState().toggleMute();
+      usePlayer.getState().toggleMute();
 
       expect(usePlayer.getState().isMuted).toBe(false);
       expect(usePlayer.getState().volume).toBe(0.25);

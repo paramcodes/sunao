@@ -5,7 +5,6 @@ import { hasSupabase } from "@/lib/supabase/client";
 import { createLocalRepo } from "./local-repo";
 import { createSupabaseRepo } from "./supabase-repo";
 
-/** The one contract for the user's library, whatever backs it. */
 export type LibraryRepo = {
   listPlaylists(): Promise<Playlist[]>;
   getPlaylist(id: string): Promise<Playlist | null>;

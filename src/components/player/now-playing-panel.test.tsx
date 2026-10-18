@@ -45,14 +45,12 @@ describe("NowPlayingPanel", () => {
   it("returns focus to trigger element when closed", async () => {
     const user = userEvent.setup();
 
-    // Create trigger button in document
     const trigger = document.createElement("button");
     trigger.id = "now-playing-trigger";
     document.body.appendChild(trigger);
     trigger.focus();
     expect(document.activeElement).toBe(trigger);
 
-    // Open panel
     usePlayer.setState({ isNowPlayingOpen: true });
     renderWithClient(<NowPlayingPanel />);
 

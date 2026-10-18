@@ -54,7 +54,6 @@ export function MobileSheetPlayer() {
     setIsDragging(false);
   }, [setNowPlayingOpen]);
 
-  // Touch gesture handling for swipe down to dismiss
   const handleTouchStart = (e: React.TouchEvent) => {
     touchStartY.current = e.touches[0].clientY;
     touchStartTime.current = Date.now();
@@ -73,7 +72,6 @@ export function MobileSheetPlayer() {
     const duration = Date.now() - touchStartTime.current;
     const velocity = duration > 0 ? dragY / duration : 0;
 
-    // Dismiss if dragged down more than 80px or with flick velocity > 0.4 px/ms
     if (dragY > 80 || velocity > 0.4) {
       dismiss();
     } else {
@@ -83,7 +81,6 @@ export function MobileSheetPlayer() {
     touchStartY.current = null;
   };
 
-  // Manage focus return on close
   useEffect(() => {
     if (isNowPlayingOpen) {
       if (document.activeElement instanceof HTMLElement) {
@@ -95,7 +92,6 @@ export function MobileSheetPlayer() {
     }
   }, [isNowPlayingOpen]);
 
-  // Handle Escape key
   useEffect(() => {
     if (!isNowPlayingOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -134,7 +130,6 @@ export function MobileSheetPlayer() {
             : undefined,
         }}
       >
-        {/* Swipe-down handle area */}
         <div
           data-slot="drag-handle-area"
           onTouchStart={handleTouchStart}
@@ -148,7 +143,6 @@ export function MobileSheetPlayer() {
           />
         </div>
 
-        {/* Top Header */}
         <div className="flex items-center justify-between pb-2">
           <button
             type="button"
@@ -159,7 +153,6 @@ export function MobileSheetPlayer() {
             <ChevronDown className="h-6 w-6" />
           </button>
 
-          {/* Tab switcher: Cover / Lyrics */}
           <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1">
             <button
               type="button"
@@ -199,7 +192,6 @@ export function MobileSheetPlayer() {
           </button>
         </div>
 
-        {/* Center: Extra-large Artwork or Lyrics */}
         <div className="flex min-h-0 flex-1 items-center justify-center py-2">
           {activeTab === "artwork" ? (
             <div
@@ -230,9 +222,7 @@ export function MobileSheetPlayer() {
           )}
         </div>
 
-        {/* Controls Section */}
         <div className="flex flex-col gap-3 pt-2">
-          {/* Song info and Like button */}
           <div className="flex items-center justify-between">
             <div className="min-w-0 pr-3">
               <h2 className="truncate text-xl font-bold text-white">
@@ -245,12 +235,10 @@ export function MobileSheetPlayer() {
             {song && <LikeButton songId={song.id} />}
           </div>
 
-          {/* Seek Bar */}
           <div className="flex items-center gap-2">
             <SeekBar fallbackDuration={song?.duration ?? 0} />
           </div>
 
-          {/* Transport Controls */}
           <div className="flex items-center justify-between pt-1">
             <SpeedControl />
 
@@ -310,7 +298,6 @@ export function MobileSheetPlayer() {
         </div>
       </div>
 
-      {/* Queue Drawer Sheet */}
       <Sheet open={queueOpen} onOpenChange={setQueueOpen}>
         <SheetContent side="bottom" className="max-h-[80dvh] p-4" showCloseButton={false}>
           <SheetTitle className="sr-only">Queue</SheetTitle>
