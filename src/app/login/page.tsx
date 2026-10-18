@@ -1,12 +1,9 @@
-import type { Metadata } from "next";
-import LoginPage from "./login-client";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Sign in to sunao to open your library, playlists, and queue.",
-  alternates: { canonical: "/login" },
-  robots: { index: false, follow: true },
-};
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   const router = useRouter();

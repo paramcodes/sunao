@@ -1,8 +1,4 @@
-import type { Metadata, ResolvingMetadata } from "next";
-import { notFound } from "next/navigation";
-import { PLAYLISTS } from "@/lib/data/songs";
-import { SITE_URL } from "@/lib/site";
-import PlaylistPage from "./playlist-client";
+"use client";
 
 import { ArrowLeft, Play, X } from "lucide-react";
 import Image from "next/image";
@@ -82,7 +78,6 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
     setQueue(songs.map((s) => s.id));
     play(songs[0]);
   };
-}
 
   const remove = (songId: number) => {
     setSongs.mutate({
@@ -90,7 +85,7 @@ export default function PlaylistPage({ params }: { params?: Promise<{ id: string
       songIds: playlist.songIds.filter((sid) => sid !== songId),
     });
   };
-  const jsonLdScript = { __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") };
+
   return (
     <main className="scroll-pane flex-1 overflow-y-auto p-4 sm:p-6">
       <button

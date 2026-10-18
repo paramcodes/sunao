@@ -6,7 +6,6 @@ import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { PlayerProvider } from "@/components/player-provider";
 import { Providers } from "@/components/providers";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { DEFAULT_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const figtree = Figtree({
@@ -20,23 +19,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: { template: "%s | sunao", default: "sunao" },
-  description: DEFAULT_DESCRIPTION,
-  applicationName: SITE_NAME,
-  openGraph: {
-    type: "website",
-    siteName: SITE_NAME,
-    title: SITE_NAME,
-    description: DEFAULT_DESCRIPTION,
-    url: "/",
-    locale: "en_US",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: SITE_NAME,
-    description: DEFAULT_DESCRIPTION,
-  },
+  title: "sunao",
+  description: "A Spotify-like music player",
 };
 
 export const viewport: Viewport = {
@@ -86,8 +70,6 @@ export default function RootLayout({
             }}
           />
         </Providers>
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
