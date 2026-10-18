@@ -1,6 +1,6 @@
 # Player bar
 
-The bottom player bar shows the current song, play/pause, prev/next, seek, speed, and like.
+The bottom player bar shows the current song, play/pause, prev/next, seek, speed, shuffle, repeat, volume, and like.
 It starts **idle** ("Nothing playing", transport disabled) until a track is played.
 
 ## Sub-features
@@ -9,6 +9,9 @@ It starts **idle** ("Nothing playing", transport disabled) until a track is play
 - `player-seek` drags the desktop scrubber.
 - `player-mobile-seek` drags the thin bar at the top of the bar on mobile.
 - `player-speed` changes playback rate.
+- `player-shuffle` context-aware queue shuffle.
+- `player-repeat` 3-state repeat mode (off/all/one).
+- `player-volume` slider and mute toggle.
 - `player-like` toggles liked state.
 
 ## How to get to it (user POV)
