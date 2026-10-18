@@ -35,6 +35,8 @@ While a track is loading the play button swaps to a spinner. That flag is deboun
 
 The mobile seek bar drags a local value and commits to the store on release (`onValueCommitted`), so scrubbing never fights the audio element.
 
+While a track is loading the play button swaps to a spinner. That flag is debounced 200ms (`use-delayed-flag.ts`) so a preview that loads instantly never flashes a spinner.
+
 ## Folders
 - `src/app/` — root layout, `(app)/` route group (shell layout, home, search, library, playlist, artist, album), `about/`, `auth/callback`, `login`, `signup`, `globals.css`, `robots.ts`, `sitemap.ts`.
 - `src/components/ui/` — shadcn primitives on Base UI (button, dialog, sheet, slider, input, tooltip, kbd, skeleton, empty-state).

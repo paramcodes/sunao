@@ -115,6 +115,7 @@ Environment variables (optional, for Supabase data and auth):
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SITE_URL=          # canonical origin for metadata, sitemap, and share images
 ```
 
 Without them the app falls back to the bundled seed data and skips auth.

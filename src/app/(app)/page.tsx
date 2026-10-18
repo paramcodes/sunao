@@ -1,4 +1,5 @@
-"use client";
+import type { Metadata } from "next";
+import HomeClient from "./home-client";
 
 import { Disc3, Music, Play, Sparkles } from "lucide-react";
 import Image from "next/image";

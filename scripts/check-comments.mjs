@@ -21,7 +21,6 @@ function isAllowed(comment) {
     .replace(/^\/\*+|\*+\/$|^\/\/\/?\s*/g, "")
     .trim();
   if (trimmed.replace(/^\//, "").trim().startsWith("<reference")) return true;
-  // JSDoc on exports is allowed; handled separately below
   return ALLOW.some((r) => r.test(trimmed));
 }
 
@@ -35,35 +34,72 @@ function walk(dir, out = []) {
   return out;
 }
 
+function scanComments(src) {
+  const found = [];
+  let i = 0;
+  let line = 1;
+  while (i < src.length) {
+    const ch = src[i];
+    const next = src[i + 1];
+    if (ch === "\n") {
+      line += 1;
+      i += 1;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      const quote = ch;
+      i += 1;
+      while (i < src.length) {
+        if (src[i] === "\\") {
+          i += 2;
+          continue;
+        }
+        if (src[i] === "\n") line += 1;
+        if (src[i] === quote) {
+          i += 1;
+          break;
+        }
+        i += 1;
+      }
+      continue;
+    }
+    if (ch === "/" && next === "/") {
+      let end = src.indexOf("\n", i);
+      if (end === -1) end = src.length;
+      found.push({ line, raw: src.slice(i, end), inline: true });
+      i = end;
+      continue;
+    }
+    if (ch === "/" && next === "*") {
+      const close = src.indexOf("*/", i + 2);
+      const stop = close === -1 ? src.length : close + 2;
+      found.push({ line, raw: src.slice(i, stop), inline: false });
+      line += src.slice(i, stop).split("\n").length - 1;
+      i = stop;
+      continue;
+    }
+    i += 1;
+  }
+  return found;
+}
+
 let failed = false;
 for (const file of walk(ROOT)) {
   const src = readFileSync(file, "utf8");
-  // strip strings roughly
-  const lines = src.split("\n");
-  lines.forEach((line, i) => {
-    const m = line.match(/\/\/\s*(.*)$/);
-    if (m) {
-      const c = m[1].trim();
+  for (const comment of scanComments(src)) {
+    if (comment.inline) {
+      const c = comment.raw.replace(/^\/\/\s*/, "").trim();
       if (c && !isAllowed(c)) {
-        // allow JSDoc-ish inline? no; flag
-        console.error(`${file}:${i + 1}: disallowed comment: ${c}`);
+        console.error(`${file}:${comment.line}: disallowed comment: ${c}`);
         failed = true;
       }
+      continue;
     }
-  });
-  // block comments
-  const blockRe = /\/\*[\s\S]*?\*\//g;
-  let bm = blockRe.exec(src);
-  while (bm) {
-    const c = bm[0].replace(/\/\*+|\*+\//g, "").trim();
+    const c = comment.raw.replace(/\/\*+|\*+\//g, "").trim();
     if (c && !isAllowed(c) && !c.startsWith("*")) {
-      // compute line
-      const upTo = src.slice(0, bm.index);
-      const ln = upTo.split("\n").length;
-      console.error(`${file}:${ln}: disallowed block comment`);
+      console.error(`${file}:${comment.line}: disallowed block comment`);
       failed = true;
     }
-    bm = blockRe.exec(src);
   }
 }
 

@@ -1,4 +1,5 @@
-"use client";
+import type { Metadata } from "next";
+import LibraryPage from "./library-client";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";

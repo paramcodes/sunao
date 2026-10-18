@@ -1,4 +1,5 @@
-"use client";
+import type { Metadata } from "next";
+import SearchPage from "./search-client";
 
 import { Clock, Disc3, Mic2, Music, Play, Search as SearchIcon, X } from "lucide-react";
 import Image from "next/image";
