@@ -24,9 +24,9 @@ Above `lg` the queue panel is collapsible. A button in a header row at the top o
 ## Ownership of state
 Three owners, no overlaps — see [concepts/state-ownership.md](concepts/state-ownership.md) for the reasoning:
 
-- **Zustand (playback only)**: `stores/player.ts` holds `currentSongId`, `isPlaying`, `isBuffering`, `position`, `duration`, `speed`, and `queue` (ids). It starts empty and knows nothing about the catalogue; components resolve ids through query hooks. It also renders the idle state: transport controls are inert and Space is a no-op until a track is chosen (`currentSongId !== null`).
+- **Zustand (playback only)**: `stores/player.ts` holds `currentSongId`, `isPlaying`, `isBuffering`, `position`, `duration`, `speed`, `volume`, `isMuted`, `isShuffle`, `repeatMode`, `isNowPlayingOpen`, `queue`, and arbitrary catalog track registration (`customSongs`). Player preferences (`volume`, `isMuted`, `isShuffle`, `repeatMode`) persist in `localStorage` under `sunao.player.v1`. It also renders the idle state: transport controls are inert and Space is a no-op until a track is chosen (`currentSongId !== null`).
 - **TanStack Query (catalogue + library)**: songs, albums, playlists, and likes. The library calls go through the repository seam ([concepts/persistence.md](concepts/persistence.md)).
-- **Component state**: search input, sheet open, queue collapsed, form open.
+- **Component state**: search query and category tabs, sheet open, queue collapsed, lyrics panel mode, form open.
 
 ## Playback timing
 The seek bar's `max` and the total-time label come from the **audio element's real duration** (`duration` in the store, set from `loadedmetadata`/`durationchange`), not from the song metadata. Song metadata durations describe the full track; the app plays 30-second iTunes previews, so the two disagree and seeking against the metadata length would jump past the end of the audio. The slider clamps to `max || 1` so a 0/N duration cannot wedge it.
@@ -36,15 +36,16 @@ While a track is loading the play button swaps to a spinner. That flag is deboun
 The mobile seek bar drags a local value and commits to the store on release (`onValueCommitted`), so scrubbing never fights the audio element.
 
 ## Folders
-- `src/app/` — root layout, `(app)/` route group (shell layout, home, search, library, playlist), `about/`, `auth/callback`, `login`, `signup`, `globals.css`, `robots.ts`, `sitemap.ts`.
+- `src/app/` — root layout, `(app)/` route group (shell layout, home, search, library, playlist, artist, album), `about/`, `auth/callback`, `login`, `signup`, `globals.css`, `robots.ts`, `sitemap.ts`.
 - `src/components/ui/` — shadcn primitives on Base UI (button, dialog, sheet, slider, input, tooltip, kbd, skeleton, empty-state).
 - `src/components/layout/` — app shell pieces (sidebar, player bar, queue panel, mobile nav).
+- `src/components/player/` — now-playing panel overlay, mobile bottom-sheet player, lyrics panel.
 - `src/components/features/` — feature components (`PlaylistForm`).
 - `src/components/` — cross-cutting providers (`providers`, `player-provider`, `keyboard-shortcuts`).
 - `src/hooks/` — reusable hooks (`use-audio`, `use-delayed-flag`).
 - `src/stores/` — Zustand stores (player).
 - `src/lib/library/` — the repository seam: `repo.ts` (port), `local-repo.ts` (localStorage), `supabase-repo.ts` (Supabase).
-- `src/lib/` — utils, query client, Supabase clients + row helpers, schemas, queries, the iTunes client, `greeting.ts`, `site.ts`, and the bundled dataset.
+- `src/lib/` — utils, query client, Supabase clients + row helpers, schemas, queries, the iTunes client, `recent-searches.ts`, `recently-played.ts`, `greeting.ts`, `site.ts`, and the bundled dataset.
 - `src/types/` — shared types (re-exported from the Zod schemas).
 - `docs/` — this wiki.
 

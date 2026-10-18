@@ -36,6 +36,10 @@ Captured from a production build; regenerate with [scripts/capture-readme.mjs](s
 
 Playback
 - Play / pause, previous / next, and auto-advance when a track ends
+- Volume control: responsive slider, mute toggle button, and keyboard volume shortcuts (`↑`/`↓`), persisted in `localStorage`
+- Shuffle mode: context-aware queue randomization preserving the active song at index 0 and cleanly restoring original queue on toggle
+- Repeat modes: 3-state toggle (`off` / `all` / `one`) wired into audio `ended` event
+- Comprehensive keyboard shortcuts: `Space` (play/pause), `Shift+N` / `J` (next), `Shift+P` / `K` (prev), `L` (like/unlike current track), `↑`/`↓` (volume up/down), input-guarded against text entry
 - Seek scrubber bound to the audio element's real duration, with position and total labels
 - Playback speed: 0.5×, 1×, 1.25×, 1.5×, 2×
 - Like / unlike the current track — persisted (a versioned `localStorage` library document without a backend; a `liked_songs` table in Supabase mode), with optimistic updates and an Undo toast on removal
@@ -44,14 +48,18 @@ Playback
 - Album artwork from the iTunes CDN, served through `next/image`
 
 Browse
-- Home: album grid (click an album to play it) plus the full song list
-- Search: filter songs by title or artist, with an empty state
+- Home: album grid, full song list, "Recently Played" history, and "Made For You" dynamic recommendation pool
+- Search: live iTunes Search API catalog querying (debounced 300ms with abort cancellation and local fallback), category tabs (`All`, `Songs`, `Albums`, `Artists`, `Playlists`), and persisted recent searches
+- Detail routes: Artist pages (`/artist/[id]`) with header, top songs, and discography; Album pages (`/album/[id]`) with artwork, tracklist, and "Play all"
 - Library: list playlists and create a new one (writes to Supabase when configured, to an on-device store otherwise — both persist across reloads)
 - Playlist detail: cover, song count, "Play all", remove a song, empty state
 
-Now playing and queue
+Now playing, queue, and lyrics
 - Now-playing card and a windowed (virtualized) queue; click any row to jump to it
+- Expanded Now-Playing view: full-screen modal panel (`NowPlayingPanel`) replacing native Fullscreen API button, featuring large 420px artwork, full transport controls, seek bar, queue drawer sheet, and lyrics toggle
+- Synchronized lyrics: scrolling `LyricsPanel` tracking playback time, with smooth auto-centering and click-to-seek
 - Collapsible queue panel at `lg` and up: narrows to a 40px rail instead of unmounting, so the toggle stays reachable and scroll position survives; the collapsed content is `inert`
+- Mobile bottom-sheet player: touch-gestured bottom sheet (`MobileSheetPlayer`) with swipe-up to expand from player bar and swipe-down to dismiss (velocity-aware, `inert` when closed)
 - Mobile queue in a bottom sheet
 
 Auth (Supabase, optional)
