@@ -14,21 +14,29 @@ Full-resolution video: [MP4](artifacts/readme/demo.mp4) · [WebM](artifacts/read
 |---|---|
 | ![Home](artifacts/readme/home.png) | ![Search](artifacts/readme/search.png) |
 
+| Expanded Now Playing | Synchronized Lyrics |
+|---|---|
+| ![Now Playing](artifacts/readme/now-playing.png) | ![Lyrics](artifacts/readme/lyrics.png) |
+
+| Artist Detail | Album Detail |
+|---|---|
+| ![Artist Detail](artifacts/readme/artist.png) | ![Album Detail](artifacts/readme/album.png) |
+
 | Library | Playlist |
 |---|---|
 | ![Library](artifacts/readme/library.png) | ![Playlist](artifacts/readme/playlist.png) |
 
-| Now playing | Collapsed queue |
+| Player bar & controls | Collapsed queue |
 |---|---|
-| ![Now playing](artifacts/readme/playing.png) | ![Collapsed queue](artifacts/readme/queue-collapsed.png) |
+| ![Player controls](artifacts/readme/playing.png) | ![Collapsed queue](artifacts/readme/queue-collapsed.png) |
 
-| Sign in | Sign up |
+| Mobile home | Mobile now playing |
 |---|---|
-| ![Sign in](artifacts/readme/login.png) | ![Sign up](artifacts/readme/signup.png) |
+| ![Mobile home](artifacts/readme/mobile-home.png) | ![Mobile now playing](artifacts/readme/mobile-now-playing.png) |
 
-| Mobile home | Mobile queue |
+| Mobile queue | Sign in |
 |---|---|
-| ![Mobile home](artifacts/readme/mobile-home.png) | ![Mobile queue](artifacts/readme/mobile-queue.png) |
+| ![Mobile queue](artifacts/readme/mobile-queue.png) | ![Sign in](artifacts/readme/login.png) |
 
 Captured from a production build; regenerate with [scripts/capture-readme.mjs](scripts/capture-readme.mjs).
 
